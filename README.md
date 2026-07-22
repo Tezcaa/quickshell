@@ -47,6 +47,17 @@ Start the shell with `qs` (add `spawn-at-startup "qs"` to your compositor).
   (tested on niri)
 - CaskaydiaMono Nerd Font (installed by the installer)
 
+## Updating this repo from your live config
+
+After tweaking your live config, sync it back and push:
+
+```sh
+~/quickshell/update-repo.sh "optional commit message"
+```
+
+It copies `~/.config/quickshell/*.qml`, the project scripts from `~/Scripts`,
+and `~/Pictures/wallpaper.png` into the repo, commits, and pushes.
+
 ## Notes
 
 - Notifications replace mako. To hand over the notification bus:
