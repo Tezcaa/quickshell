@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Print "1" if the running kernel differs from the installed kernel
+# (i.e. a reboot is needed to use the updated kernel), else "0".
+
+kernel_pkg=""
+for k in linux linux-lts linux-zen linux-hardened linux-cachyos; do
+  if pacman -Q "$k" >/dev/null 2>&1; then
+    kernel_pkg="$k"
+    break
+  fi
+done
+
+if [[ -z $kernel_pkg ]]; then
+  echo "0"
+  exit 0
+fi
+
+running_ver="$(uname -r)"
+running_ver="${running_ver%%-*}"
+installed_ver="$(pacman -Q "$kernel_pkg" | awk '{print $2}' | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')"
+
+if [[ -n $installed_ver && $running_ver != "$installed_ver" ]]; then
+  echo "1"
+else
+  echo "0"
+fi

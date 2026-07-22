@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -o pipefail
+
+need_cmd() {
+  local cmd="$1"
+  local hint="$2"
+
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Missing required command: $cmd" >&2
+    [[ -n $hint ]] && echo "$hint" >&2
+    exit 127
+  fi
+}
+
+need_cmd fzf "Install it with: sudo pacman -S --needed fzf"
+need_cmd pacman "This script requires pacman (Arch Linux)."
+need_cmd sudo "Install it with: sudo pacman -S --needed sudo"
+
+fzf_args=(
+  --multi
+  --color 'pointer:red,marker:red'
+)
+
+while true; do
+  pkg_names=$(pacman -Qqe | fzf "${fzf_args[@]}")
+
+  if [[ -z $pkg_names ]]; then
+    break
+  fi
+
+  sudo -v
+  echo "$pkg_names" | tr '\n' ' ' | xargs sudo pacman -Rns --noconfirm
+  printf 'Done. Pick more packages or press ESC to quit.\n'
+done

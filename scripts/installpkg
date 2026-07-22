@@ -1,0 +1,104 @@
+#!/bin/bash
+
+set -o pipefail
+
+need_cmd() {
+  local cmd="$1"
+  local hint="$2"
+
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Missing required command: $cmd" >&2
+    [[ -n $hint ]] && echo "$hint" >&2
+    exit 127
+  fi
+}
+
+mode="${1:-all}" # all | repo | aur
+case "$mode" in
+all|repo|aur) ;;
+--repo-only) mode="repo" ;;
+--aur-only) mode="aur" ;;
+*)
+  echo "Usage: $0 [all|repo|aur|--repo-only|--aur-only]" >&2
+  exit 2
+  ;;
+esac
+
+need_cmd fzf "Install it with: sudo pacman -S --needed fzf"
+need_cmd pacman "This script requires pacman (Arch Linux)."
+need_cmd sudo "Install it with: sudo pacman -S --needed sudo"
+
+if [[ $mode == "all" || $mode == "aur" ]]; then
+  need_cmd yay "Install it with: sudo pacman -S --needed yay"
+fi
+
+declare -A INSTALLED
+
+refresh_installed() {
+  local pkg=""
+  INSTALLED=()
+
+  while IFS= read -r pkg; do
+    [[ -n $pkg ]] && INSTALLED["$pkg"]=1
+  done < <(pacman -Qq)
+}
+
+package_line() {
+  local source="$1"
+  local pkg="$2"
+  local mark=" "
+
+  if [[ -n ${INSTALLED[$pkg]} ]]; then
+    mark="✓"
+  fi
+
+  printf '%s\t%s %s\t%s\n' "$source" "$mark" "$pkg" "$pkg"
+}
+
+build_package_list() {
+  local pkg=""
+
+  if [[ $mode == "all" || $mode == "repo" ]]; then
+    while IFS= read -r pkg; do
+      package_line "repo" "$pkg"
+    done < <(pacman -Slq)
+  fi
+
+  if [[ $mode == "all" || $mode == "aur" ]]; then
+    while IFS= read -r pkg; do
+      package_line "aur" "$pkg"
+    done < <(yay -Slqa)
+  fi
+}
+
+fzf_args=(
+  --multi
+  --delimiter=$'\t'
+  --with-nth=2
+  --color 'pointer:green,marker:green'
+)
+
+while true; do
+  refresh_installed
+  pkg_lines=$(build_package_list | fzf "${fzf_args[@]}")
+
+  if [[ -z $pkg_lines ]]; then
+    break
+  fi
+
+  sudo -v
+
+  repo_pkgs=$(awk -F'\t' '$1 == "repo" { print $3 }' <<<"$pkg_lines")
+  aur_pkgs=$(awk -F'\t' '$1 == "aur"  { print $3 }' <<<"$pkg_lines")
+
+  if [[ -n $repo_pkgs ]]; then
+    echo "$repo_pkgs" | tr '\n' ' ' | xargs sudo pacman -S --noconfirm
+  fi
+
+  if [[ -n $aur_pkgs ]]; then
+    echo "$aur_pkgs" | sed 's/^/aur\//' | tr '\n' ' ' | xargs yay -S --noconfirm
+    sudo updatedb
+  fi
+
+  printf 'Done. Pick more packages or press ESC to quit.\n'
+done

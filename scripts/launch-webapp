@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Launch a URL as a chromeless web app in helium (Chromium-based).
+# Usage: launch-webapp <url> [extra chromium args...]
+
+set -e
+
+if [[ -z $1 ]]; then
+  echo "Usage: $(basename "$0") <url> [args...]" >&2
+  exit 1
+fi
+
+exec setsid helium-browser --app="$1" "${@:2}" >/dev/null 2>&1

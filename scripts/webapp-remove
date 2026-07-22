@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Remove a web app created by webapp-install.
+# Interactive picker when run with no args; or:
+#   webapp-remove <name>
+
+set -e
+
+APP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$APP_DIR/icons"
+LAUNCHER_NAME="launch-webapp"
+
+# List desktop files that are web apps (Exec points to launch-webapp).
+list_webapps() {
+  local f name
+  for f in "$APP_DIR"/*.desktop; do
+    [[ -e $f ]] || continue
+    if grep -qE "^Exec=.*${LAUNCHER_NAME}" "$f"; then
+      name=$(sed -n 's/^Name=//p' "$f" | head -1)
+      [[ -n $name ]] && printf '%s\n' "$name"
+    fi
+  done
+}
+
+remove_webapp() {
+  local name="$1"
+  local desktop="$APP_DIR/$name.desktop"
+  if [[ ! -f $desktop ]]; then
+    echo "No web app named '$name' found." >&2
+    return 1
+  fi
+  rm -f "$desktop"
+  rm -f "$ICON_DIR/$name.png"
+  echo -e "\e[32mRemoved $name.\e[0m"
+}
+
+if (($# >= 1)); then
+  remove_webapp "$1"
+else
+  mapfile -t apps < <(list_webapps)
+  if ((${#apps[@]} == 0)); then
+    echo "No web apps installed."
+    echo "Press Enter to close."
+    read -r
+    exit 0
+  fi
+
+  echo -e "\e[32mInstalled web apps:\e[0m\n"
+  select choice in "${apps[@]}" "Cancel"; do
+    if [[ $choice == "Cancel" || -z $choice ]]; then
+      echo "Cancelled."
+      break
+    fi
+    remove_webapp "$choice"
+    break
+  done
+fi
+
+command -v update-desktop-database >/dev/null 2>&1 &&
+  update-desktop-database "$APP_DIR" 2>/dev/null || true
+
+if (($# < 1)); then
+  echo "Press Enter to close."
+  read -r
+fi

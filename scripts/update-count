@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Print the number of available updates (repo + AUR + flatpak).
+# Uses checkupdates (no sudo, no DB lock) when available.
+
+count=0
+
+# Repo updates: prefer checkupdates (pacman-contrib) which refreshes a temp DB
+# without sudo; fall back to pacman -Qu against the current synced DB.
+if command -v checkupdates >/dev/null 2>&1; then
+  repo=$(checkupdates 2>/dev/null | wc -l)
+else
+  repo=$(pacman -Qu 2>/dev/null | grep -vc '\[ignored\]')
+fi
+count=$((count + repo))
+
+# AUR updates.
+if command -v yay >/dev/null 2>&1; then
+  aur=$(yay -Qua 2>/dev/null | wc -l)
+  count=$((count + aur))
+fi
+
+# Flatpak updates.
+if command -v flatpak >/dev/null 2>&1; then
+  fp=$(flatpak remote-ls --updates 2>/dev/null | wc -l)
+  count=$((count + fp))
+fi
+
+echo "$count"

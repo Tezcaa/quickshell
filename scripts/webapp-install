@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Create a desktop launcher for a web app (chromeless helium window).
+# Interactive when run with no args; or:
+#   webapp-install <name> <url> [icon-url-or-file] [custom-exec] [mime-types]
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ICON_DIR="$HOME/.local/share/applications/icons"
+LAUNCHER="$SCRIPT_DIR/launch-webapp"
+
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 127; }
+}
+need_cmd curl
+
+if (($# < 2)); then
+  echo -e "\e[32mLet's create a new web app you can start from the app launcher.\e[0m\n"
+  read -rp "Name: " APP_NAME
+  read -rp "URL:  " APP_URL
+  [[ $APP_URL =~ ^[a-zA-Z][a-zA-Z0-9+.-]*: ]] || APP_URL="https://$APP_URL"
+
+  mkdir -p "$ICON_DIR"
+  FAVICON_URL="https://www.google.com/s2/favicons?domain=${APP_URL}&sz=128"
+  if curl -fsSL -o "$ICON_DIR/$APP_NAME.png" "$FAVICON_URL" && [[ -s "$ICON_DIR/$APP_NAME.png" ]]; then
+    ICON_REF="$APP_NAME.png"
+    echo "Fetched favicon automatically."
+  else
+    read -rp "Icon URL (PNG, e.g. from https://dashboardicons.com): " ICON_REF
+  fi
+
+  CUSTOM_EXEC=""
+  MIME_TYPES=""
+  INTERACTIVE_MODE=true
+else
+  APP_NAME="$1"
+  APP_URL="$2"
+  [[ $APP_URL =~ ^[a-zA-Z][a-zA-Z0-9+.-]*: ]] || APP_URL="https://$APP_URL"
+  ICON_REF="$3"
+  CUSTOM_EXEC="$4"
+  MIME_TYPES="$5"
+  INTERACTIVE_MODE=false
+fi
+
+if [[ -z $APP_NAME || -z $APP_URL ]]; then
+  echo "You must set app name and app URL!" >&2
+  exit 1
+fi
+
+mkdir -p "$ICON_DIR"
+
+# Resolve icon: URL -> download; local name -> use from icon dir; empty -> favicon.
+if [[ -z $ICON_REF ]]; then
+  ICON_REF="https://www.google.com/s2/favicons?domain=${APP_URL}&sz=128"
+fi
+
+if [[ $ICON_REF =~ ^https?:// ]]; then
+  ICON_PATH="$ICON_DIR/$APP_NAME.png"
+  if ! curl -fsSL -o "$ICON_PATH" "$ICON_REF" || [[ ! -s "$ICON_PATH" ]]; then
+    echo "Warning: could not download icon; using a generic one." >&2
+    rm -f "$ICON_PATH"
+    ICON_PATH="applications-internet"
+  fi
+else
+  ICON_PATH="$ICON_DIR/$ICON_REF"
+fi
+
+EXEC_COMMAND="${CUSTOM_EXEC:-$LAUNCHER $APP_URL}"
+DESKTOP_FILE="$HOME/.local/share/applications/$APP_NAME.desktop"
+
+cat >"$DESKTOP_FILE" <<EOF
+[Desktop Entry]
+Version=1.0
+Name=$APP_NAME
+Comment=$APP_NAME
+Exec=$EXEC_COMMAND
+Terminal=false
+Type=Application
+Icon=$ICON_PATH
+StartupNotify=true
+EOF
+
+[[ -n $MIME_TYPES ]] && echo "MimeType=$MIME_TYPES" >>"$DESKTOP_FILE"
+
+chmod +x "$DESKTOP_FILE"
+command -v update-desktop-database >/dev/null 2>&1 &&
+  update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+
+echo -e "\n\e[32mCreated $APP_NAME.\e[0m You can now find it in the app launcher (Mod+Space)."
+
+if [[ $INTERACTIVE_MODE == "true" ]]; then
+  echo "Press Enter to close."
+  read -r
+fi

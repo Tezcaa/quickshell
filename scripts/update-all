@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Update all packages: pacman/AUR (yay) + Flatpak.
+# Warns if the kernel was updated and a reboot is needed.
+
+set -o pipefail
+
+echo -e "\e[32m==> Updating system packages (pacman + AUR)...\e[0m"
+if command -v yay >/dev/null 2>&1; then
+  # --removemake: clean build deps; --answer* skip yay's interactive menus;
+  # --noconfirm: skip the pacman "packages to exclude" / confirmation prompts.
+  yay -Syu --noconfirm --removemake --answerclean All --answerdiff None
+else
+  sudo pacman -Syu --noconfirm
+fi
+
+if command -v flatpak >/dev/null 2>&1; then
+  echo -e "\n\e[32m==> Updating Flatpaks...\e[0m"
+  flatpak update -y
+fi
+
+# --- Reboot check: compare running kernel to the installed one ---
+# Detect which kernel package is installed and its pkgver.
+kernel_pkg=""
+for k in linux linux-lts linux-zen linux-hardened linux-cachyos; do
+  if pacman -Q "$k" >/dev/null 2>&1; then
+    kernel_pkg="$k"
+    break
+  fi
+done
+
+if [[ -n $kernel_pkg ]]; then
+  running="$(uname -r)"
+  # Installed version, e.g. "7.1.4.arch1-1"; normalize to compare loosely.
+  installed="$(pacman -Q "$kernel_pkg" | awk '{print $2}')"
+  # Extract the numeric version prefix from both for a simple mismatch check.
+  running_ver="${running%%-*}"                      # 7.1.3
+  installed_ver="$(echo "$installed" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' )"
+
+  if [[ $running_ver != "$installed_ver" ]]; then
+    echo -e "\n\e[1;33m==============================================\e[0m"
+    echo -e "\e[1;33m  Kernel updated: running $running_ver -> installed $installed_ver\e[0m"
+    echo -e "\e[1;33m  A REBOOT is required to use the new kernel.\e[0m"
+    echo -e "\e[1;33m==============================================\e[0m"
+  fi
+fi
+
+echo -e "\n\e[32mAll done.\e[0m Press Enter to close."
+read -r
+
