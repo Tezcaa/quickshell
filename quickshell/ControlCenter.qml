@@ -95,7 +95,7 @@ PanelWindow {
     }
 
     // ---- Audio sample rate ----
-    readonly property var sampleRates: [0, 44100, 48000, 88200, 96000, 192000]
+    readonly property var sampleRates: [0, 44100, 48000, 96000, 192000]
     property int sampleRate: 0
     property bool sampleRateForced: false
     property bool showRates: false
