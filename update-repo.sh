@@ -18,7 +18,7 @@ cp -v "$QS_DIR"/*.qml "$REPO_DIR/quickshell/"
 info "Copying scripts..."
 # Only the scripts this project ships (avoid pulling unrelated ~/Scripts files).
 for s in installpkg removepkg launch-webapp webapp-install webapp-remove \
-         update-all update-count reboot-needed; do
+         update-all update-count reboot-needed samplerate; do
   [[ -f "$SCRIPTS_DIR/$s" ]] && cp -v "$SCRIPTS_DIR/$s" "$REPO_DIR/scripts/"
 done
 chmod +x "$REPO_DIR/scripts/"*

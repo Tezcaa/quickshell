@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Get or set the Pipewire sample rate.
+#   samplerate            -> prints current effective rate
+#   samplerate <rate>     -> forces that rate (e.g. 44100, 48000, 96000)
+#   samplerate auto       -> clears the forced rate (0 = automatic)
+
+set -o pipefail
+
+case "${1:-get}" in
+get)
+  # Effective rate is clock.rate; if force-rate is set (non-zero) it wins.
+  forced=$(pw-metadata -n settings 0 clock.force-rate 2>/dev/null |
+    grep -oE "value:'[0-9]+'" | grep -oE '[0-9]+' | head -1)
+  rate=$(pw-metadata -n settings 0 clock.rate 2>/dev/null |
+    grep -oE "value:'[0-9]+'" | grep -oE '[0-9]+' | head -1)
+  if [[ -n $forced && $forced != "0" ]]; then
+    echo "$forced"
+  else
+    echo "${rate:-0}"
+  fi
+  ;;
+status)
+  # Prints: "<forced 0|1> <effective rate>"
+  forced=$(pw-metadata -n settings 0 clock.force-rate 2>/dev/null |
+    grep -oE "value:'[0-9]+'" | grep -oE '[0-9]+' | head -1)
+  rate=$(pw-metadata -n settings 0 clock.rate 2>/dev/null |
+    grep -oE "value:'[0-9]+'" | grep -oE '[0-9]+' | head -1)
+  if [[ -n $forced && $forced != "0" ]]; then
+    echo "1 $forced"
+  else
+    echo "0 ${rate:-0}"
+  fi
+  ;;
+auto)
+  pw-metadata -n settings 0 clock.force-rate 0 >/dev/null 2>&1
+  echo "auto"
+  ;;
+*)
+  if [[ $1 =~ ^[0-9]+$ ]]; then
+    pw-metadata -n settings 0 clock.force-rate "$1" >/dev/null 2>&1
+    echo "$1"
+  else
+    echo "Usage: $(basename "$0") [get|auto|<rate>]" >&2
+    exit 2
+  fi
+  ;;
+esac

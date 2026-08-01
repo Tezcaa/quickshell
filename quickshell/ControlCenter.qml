@@ -17,7 +17,7 @@ PanelWindow {
     property bool panelVisible: true
 
     // Re-check for updates each time the panel is opened.
-    onPanelVisibleChanged: if (panelVisible) refreshUpdates()
+    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); }
 
     visible: panelVisible
 
@@ -92,6 +92,48 @@ PanelWindow {
     function sinkLabel(node) {
         if (!node) return "";
         return node.description || node.nickname || node.name || "Output";
+    }
+
+    // ---- Audio sample rate ----
+    readonly property var sampleRates: [0, 44100, 48000, 88200, 96000, 192000]
+    property int sampleRate: 0
+    property bool sampleRateForced: false
+    property bool showRates: false
+
+    function rateLabel(rate) {
+        if (rate === 0) return "Auto";
+        return (rate / 1000).toFixed(1).replace(/\.0$/, "") + " kHz";
+    }
+
+    Process {
+        id: rateProc
+        command: [Quickshell.env("HOME") + "/Scripts/samplerate", "status"]
+        stdout: StdioCollector {
+            id: rateOut
+            onStreamFinished: {
+                // Output: "<forced 0|1> <effective rate>"
+                const parts = ("" + rateOut.text).trim().split(/\s+/);
+                cc.sampleRateForced = parts[0] === "1";
+                const n = parseInt(parts[1]);
+                cc.sampleRate = isNaN(n) ? 0 : n;
+            }
+        }
+    }
+
+    function refreshRate() { if (!rateProc.running) rateProc.running = true; }
+
+    function setRate(rate) {
+        const arg = rate === 0 ? "auto" : ("" + rate);
+        Quickshell.execDetached([Quickshell.env("HOME") + "/Scripts/samplerate", arg]);
+        cc.showRates = false;
+        rateRefreshTimer.restart();
+    }
+
+    Timer {
+        id: rateRefreshTimer
+        interval: 500
+        repeat: false
+        onTriggered: cc.refreshRate()
     }
 
     // Keep the default sink's audio data (volume/mute) live.
@@ -306,7 +348,7 @@ PanelWindow {
 
     function refreshWeather() { weatherProc.running = true; }
 
-    Component.onCompleted: { refreshWeather(); refreshUpdates(); }
+    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); }
 
     // Refresh weather every 15 minutes while open.
     Timer {
@@ -1108,6 +1150,105 @@ PanelWindow {
                                         Pipewire.preferredDefaultAudioSink = modelData;
                                         cc.showSinks = false;
                                     }
+                                }
+                            }
+                        }
+
+                        // Sample rate selector (expandable).
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 36
+                            radius: 8
+                            color: cc.bgAlt2
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 8
+
+                                Text {
+                                    text: "\uf001" // note
+                                    color: cc.fgDim
+                                    font.family: cc.fontFamily
+                                    font.pixelSize: 14
+                                    font.bold: true
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: "Sample rate"
+                                    color: cc.fg
+                                    elide: Text.ElideRight
+                                    font.family: cc.fontFamily
+                                    font.pixelSize: 13
+                                    font.bold: true
+                                }
+                                Text {
+                                    text: cc.sampleRate > 0
+                                        ? (cc.sampleRateForced ? "" : "Auto ")
+                                          + (cc.sampleRate / 1000).toFixed(1).replace(/\.0$/, "") + " kHz"
+                                        : "--"
+                                    color: cc.fgDim
+                                    font.family: cc.fontFamily
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                }
+                                Text {
+                                    text: cc.showRates ? "\uf077" : "\uf078" // chevron up / down
+                                    color: cc.fgDim
+                                    font.family: cc.fontFamily
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: cc.showRates = !cc.showRates
+                            }
+                        }
+
+                        // Sample rate list (shown when expanded).
+                        Repeater {
+                            model: cc.showRates ? cc.sampleRates : []
+
+                            Rectangle {
+                                required property var modelData
+                                readonly property bool isCurrent:
+                                    modelData === 0 ? !cc.sampleRateForced
+                                                    : (cc.sampleRateForced && modelData === cc.sampleRate)
+
+                                Layout.fillWidth: true
+                                implicitHeight: 32
+                                radius: 8
+                                color: isCurrent ? cc.accent : "transparent"
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 12
+                                    spacing: 8
+
+                                    Text {
+                                        text: isCurrent ? "\uf00c" : " " // check
+                                        color: cc.fg
+                                        font.family: cc.fontFamily
+                                        font.pixelSize: 12
+                                        font.bold: true
+                                    }
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: cc.rateLabel(modelData)
+                                        color: cc.fg
+                                        font.family: cc.fontFamily
+                                        font.pixelSize: 12
+                                        font.bold: true
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: cc.setRate(modelData)
                                 }
                             }
                         }
