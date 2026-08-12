@@ -62,15 +62,6 @@ PanelWindow {
     }
     readonly property bool hasMedia: mediaPlayer !== null
 
-    // Format a duration in seconds as m:ss.
-    function fmtDuration(seconds) {
-        if (!seconds || seconds <= 0) return "";
-        const s = Math.round(seconds);
-        const m = Math.floor(s / 60);
-        const rem = s % 60;
-        return m + ":" + (rem < 10 ? "0" + rem : rem);
-    }
-
     // ---- Audio (Pipewire) ----
     readonly property var audioSink: Pipewire.defaultAudioSink
     readonly property var sinkList: {
@@ -835,6 +826,7 @@ PanelWindow {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
+                        anchors.bottom: parent.bottom
                         anchors.margins: 16
                         spacing: 12
                         visible: cc.hasMedia
@@ -903,34 +895,14 @@ PanelWindow {
                             font.bold: true
                         }
 
-                        // Album.
-                        Text {
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignHCenter
-                            visible: cc.hasMedia && (cc.mediaPlayer.trackAlbum || "") !== ""
-                            text: cc.hasMedia ? (cc.mediaPlayer.trackAlbum || "") : ""
-                            color: cc.fgDim
-                            elide: Text.ElideRight
-                            font.family: cc.fontFamily
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
-
-                        // Track length.
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            visible: cc.hasMedia && cc.mediaPlayer.length > 0
-                            text: cc.hasMedia ? cc.fmtDuration(cc.mediaPlayer.length) : ""
-                            color: cc.fgDim
-                            font.family: cc.fontFamily
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
+                        // Flexible spacer pushes the controls to the bottom so the
+                        // buttons stay put regardless of title length.
+                        Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
                         // Controls.
                         RowLayout {
                             Layout.alignment: Qt.AlignHCenter
-                            Layout.topMargin: 6
+                            Layout.bottomMargin: 6
                             spacing: 24
 
                             Text {
