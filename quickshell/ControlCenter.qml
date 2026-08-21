@@ -1189,6 +1189,8 @@ PanelWindow {
 
                             // Volume / mute icon (click to toggle mute).
                             Text {
+                                Layout.preferredWidth: 32
+                                horizontalAlignment: Text.AlignHCenter
                                 text: {
                                     if (!cc.audioSink || !cc.audioSink.audio) return "\uf026";
                                     const a = cc.audioSink.audio;
