@@ -1103,12 +1103,9 @@ PanelWindow {
                                 }
                             }
 
-                            Text {
-                                text: "\uf01e" // repeat / loop
-                                color: (cc.hasMedia && cc.mediaPlayer.loopSupported && cc.mediaPlayer.loopState !== MprisLoopState.None) ? cc.fg : cc.fgDim
-                                font.family: cc.fontFamily
-                                font.pixelSize: 18
-                                font.bold: true
+                            Item {
+                                width: repeatIcon.implicitWidth
+                                height: repeatIcon.implicitHeight
                                 MouseArea {
                                     anchors.fill: parent
                                     anchors.margins: -8
@@ -1118,6 +1115,28 @@ PanelWindow {
                                         else if (cc.mediaPlayer.loopState === MprisLoopState.Playlist) cc.mediaPlayer.loopState = MprisLoopState.Track;
                                         else cc.mediaPlayer.loopState = MprisLoopState.None;
                                     }
+                                }
+
+                                Text {
+                                    id: repeatIcon
+                                    text: "\uf01e" // repeat / loop
+                                    color: (cc.hasMedia && cc.mediaPlayer.loopSupported && cc.mediaPlayer.loopState !== MprisLoopState.None) ? cc.fg : cc.fgDim
+                                    font.family: cc.fontFamily
+                                    font.pixelSize: 18
+                                    font.bold: true
+                                }
+
+                                Text {
+                                    anchors.right: repeatIcon.right
+                                    anchors.bottom: repeatIcon.bottom
+                                    anchors.rightMargin: -3
+                                    anchors.bottomMargin: -3
+                                    visible: cc.hasMedia && cc.mediaPlayer.loopSupported && cc.mediaPlayer.loopState === MprisLoopState.Track
+                                    text: "1"
+                                    color: cc.fg
+                                    font.family: cc.fontFamily
+                                    font.pixelSize: 9
+                                    font.bold: true
                                 }
                             }
                         }
