@@ -593,6 +593,22 @@ PanelWindow {
                                 onClicked: cc.shiftMonth(1)
                             }
                         }
+
+                        Text {
+                            text: "\uf111" // small dot / today
+                            color: (cc.viewYear !== cc.curYear || cc.viewMonth !== cc.curMonth) ? cc.fg : cc.fgDim
+                            font.family: cc.fontFamily
+                            font.pixelSize: 12
+                            font.bold: true
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -8
+                                onClicked: {
+                                    cc.viewYear = cc.curYear;
+                                    cc.viewMonth = cc.curMonth;
+                                }
+                            }
+                        }
                     }
 
                     // Weekday headers.
