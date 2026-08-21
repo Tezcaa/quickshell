@@ -884,14 +884,12 @@ PanelWindow {
 
             // ---- Media control column (right side) ----
             ColumnLayout {
-                Layout.preferredWidth: 300
-                Layout.fillHeight: true
+                Layout.preferredWidth: 280
                 Layout.alignment: Qt.AlignTop
                 spacing: 16
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
                     radius: 12
                     color: cc.bgAlt
 
