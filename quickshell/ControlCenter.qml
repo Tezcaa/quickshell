@@ -1123,6 +1123,9 @@ PanelWindow {
                     }
                 }
 
+                // Spacer pushes the remaining right-column widgets to the bottom.
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
                 // ---- Volume + output device widget ----
                 Rectangle {
                     Layout.fillWidth: true
