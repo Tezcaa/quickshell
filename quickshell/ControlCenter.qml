@@ -84,6 +84,13 @@ PanelWindow {
     }
     readonly property bool hasMedia: mediaPlayer !== null
 
+    function formatTime(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return "--:--";
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return m + ":" + (s < 10 ? "0" + s : s);
+    }
+
     // ---- Audio (Pipewire) ----
     readonly property var audioSink: Pipewire.defaultAudioSink
     readonly property var sinkList: {
@@ -959,15 +966,93 @@ PanelWindow {
                             font.bold: true
                         }
 
-                        // Flexible spacer pushes the controls to the bottom so the
-                        // buttons stay put regardless of title length.
+                        // Progress bar.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: cc.hasMedia && cc.mediaPlayer.positionSupported ? cc.formatTime(cc.mediaPlayer.position) : "--:--"
+                                color: cc.fgDim
+                                font.family: cc.fontFamily
+                                font.pixelSize: 11
+                                font.bold: true
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 6
+                                radius: 3
+                                color: cc.bgAlt2
+
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    radius: 3
+                                    color: cc.fg
+                                    width: {
+                                        if (!cc.hasMedia || !cc.mediaPlayer.positionSupported || !cc.mediaPlayer.lengthSupported || cc.mediaPlayer.length <= 0) return 0;
+                                        const pos = progressSlider.dragging ? progressSlider.seekPos : (cc.mediaPlayer.position / cc.mediaPlayer.length);
+                                        return Math.max(0, Math.min(1, pos)) * parent.width;
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: progressSlider
+                                    anchors.fill: parent
+                                    anchors.margins: -6
+                                    property real seekPos: 0
+                                    property bool dragging: false
+                                    enabled: cc.hasMedia && cc.mediaPlayer.positionSupported && cc.mediaPlayer.lengthSupported && cc.mediaPlayer.length > 0 && cc.mediaPlayer.canSeek
+                                    onPressed: (mouse) => { dragging = true; updateSeek(mouse.x); }
+                                    onPositionChanged: (mouse) => { if (dragging) updateSeek(mouse.x); }
+                                    onReleased: (mouse) => {
+                                        if (dragging) {
+                                            updateSeek(mouse.x);
+                                            if (cc.hasMedia && cc.mediaPlayer.length > 0) {
+                                                const target = seekPos * cc.mediaPlayer.length;
+                                                cc.mediaPlayer.seek(target - cc.mediaPlayer.position);
+                                            }
+                                            dragging = false;
+                                        }
+                                    }
+                                    function updateSeek(x) {
+                                        seekPos = Math.max(0, Math.min(1, x / width));
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: cc.hasMedia && cc.mediaPlayer.lengthSupported ? cc.formatTime(cc.mediaPlayer.length) : "--:--"
+                                color: cc.fgDim
+                                font.family: cc.fontFamily
+                                font.pixelSize: 11
+                                font.bold: true
+                            }
+                        }
+
+                        // Flexible spacer pushes the controls to the bottom.
                         Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
                         // Controls.
                         RowLayout {
                             Layout.alignment: Qt.AlignHCenter
                             Layout.bottomMargin: 6
-                            spacing: 24
+                            spacing: 20
+
+                            Text {
+                                text: "\uf074" // shuffle
+                                color: (cc.hasMedia && cc.mediaPlayer.shuffleSupported && cc.mediaPlayer.shuffle) ? cc.fg : cc.fgDim
+                                font.family: cc.fontFamily
+                                font.pixelSize: 18
+                                font.bold: true
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -8
+                                    onClicked: if (cc.hasMedia && cc.mediaPlayer.shuffleSupported) cc.mediaPlayer.shuffle = !cc.mediaPlayer.shuffle
+                                }
+                            }
 
                             Text {
                                 text: "\uf048" // previous
@@ -1005,6 +1090,24 @@ PanelWindow {
                                     anchors.fill: parent
                                     anchors.margins: -8
                                     onClicked: if (cc.hasMedia) cc.mediaPlayer.next()
+                                }
+                            }
+
+                            Text {
+                                text: "\uf01e" // repeat / loop
+                                color: (cc.hasMedia && cc.mediaPlayer.loopSupported && cc.mediaPlayer.loopState !== MprisLoopState.None) ? cc.fg : cc.fgDim
+                                font.family: cc.fontFamily
+                                font.pixelSize: 18
+                                font.bold: true
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -8
+                                    onClicked: {
+                                        if (!cc.hasMedia || !cc.mediaPlayer.loopSupported) return;
+                                        if (cc.mediaPlayer.loopState === MprisLoopState.None) cc.mediaPlayer.loopState = MprisLoopState.Playlist;
+                                        else if (cc.mediaPlayer.loopState === MprisLoopState.Playlist) cc.mediaPlayer.loopState = MprisLoopState.Track;
+                                        else cc.mediaPlayer.loopState = MprisLoopState.None;
+                                    }
                                 }
                             }
                         }
