@@ -884,13 +884,13 @@ PanelWindow {
 
             // ---- Media control column (right side) ----
             ColumnLayout {
-                Layout.preferredWidth: 280
+                Layout.preferredWidth: 300
                 Layout.alignment: Qt.AlignTop
                 spacing: 16
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: mediaCol.implicitHeight + 32
+                    Layout.preferredHeight: 420
                     radius: 12
                     color: cc.bgAlt
 
@@ -925,8 +925,8 @@ PanelWindow {
                         // Album art.
                         Rectangle {
                             Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 130
-                            Layout.preferredHeight: 130
+                            Layout.preferredWidth: 140
+                            Layout.preferredHeight: 140
                             radius: 10
                             color: cc.bgAlt2
                             clip: true
