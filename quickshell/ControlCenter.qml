@@ -1396,7 +1396,7 @@ PanelWindow {
                                 : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
                             color: cc.updateCount > 0 ? cc.fg : cc.fgDim
                             font.family: cc.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: 18
                             font.bold: true
                         }
                     }
