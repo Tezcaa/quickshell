@@ -539,7 +539,6 @@ PanelWindow {
 
             // ---- Calendar widget ----
             Rectangle {
-                id: calendarRect
                 Layout.fillWidth: true
                 implicitHeight: calCol.implicitHeight + 24
                 radius: 12
@@ -891,7 +890,7 @@ PanelWindow {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: calendarRect.height
+                    Layout.preferredHeight: 420
                     radius: 12
                     color: cc.bgAlt
 
