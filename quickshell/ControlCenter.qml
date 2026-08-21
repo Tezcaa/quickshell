@@ -740,55 +740,63 @@ PanelWindow {
                     }
 
                     // Hourly forecast boxes (current view only).
-                    GridLayout {
+                    Rectangle {
                         Layout.fillWidth: true
+                        Layout.preferredHeight: 282
                         Layout.topMargin: 8
+                        color: "transparent"
                         visible: !cc.showForecast && cc.wxHourly.length > 0
-                        columns: 4
-                        columnSpacing: 6
-                        rowSpacing: 6
 
-                        Repeater {
-                            model: !cc.showForecast ? cc.wxHourly : []
+                        GridLayout {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            columns: 4
+                            columnSpacing: 6
+                            rowSpacing: 6
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredWidth: 1
-                                Layout.preferredHeight: 90
-                                Layout.minimumHeight: 90
-                                Layout.maximumHeight: 90
-                                radius: 10
-                                color: cc.bgAlt2
+                            Repeater {
+                                model: !cc.showForecast ? cc.wxHourly : []
 
-                                ColumnLayout {
-                                    id: hourCol
-                                    anchors.centerIn: parent
-                                    width: parent.width - 10
-                                    spacing: 3
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
+                                    Layout.preferredHeight: 90
+                                    Layout.minimumHeight: 90
+                                    Layout.maximumHeight: 90
+                                    radius: 10
+                                    color: cc.bgAlt2
 
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.hour
-                                        color: cc.fgDim
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.temp + "\u00b0"
-                                        color: cc.fg
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 19
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.icon
-                                        color: cc.fgDim
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 28
-                                        font.bold: true
+                                    ColumnLayout {
+                                        id: hourCol
+                                        anchors.centerIn: parent
+                                        width: parent.width - 10
+                                        spacing: 3
+
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: modelData.hour
+                                            color: cc.fgDim
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 13
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: modelData.temp + "\u00b0"
+                                            color: cc.fg
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 19
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: modelData.icon
+                                            color: cc.fgDim
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 28
+                                            font.bold: true
+                                        }
                                     }
                                 }
                             }
@@ -796,55 +804,63 @@ PanelWindow {
                     }
 
                     // Forecast boxes (grid of day cards).
-                    GridLayout {
+                    Rectangle {
                         Layout.fillWidth: true
+                        Layout.preferredHeight: 282
                         Layout.topMargin: 8
+                        color: "transparent"
                         visible: cc.showForecast
-                        columns: 4
-                        columnSpacing: 6
-                        rowSpacing: 6
 
-                        Repeater {
-                            model: cc.showForecast ? cc.wxForecast : []
+                        GridLayout {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            columns: 4
+                            columnSpacing: 6
+                            rowSpacing: 6
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredWidth: 1
-                                Layout.preferredHeight: 90
-                                Layout.minimumHeight: 90
-                                Layout.maximumHeight: 90
-                                radius: 10
-                                color: cc.bgAlt2
+                            Repeater {
+                                model: cc.showForecast ? cc.wxForecast : []
 
-                                ColumnLayout {
-                                    id: dayCol
-                                    anchors.centerIn: parent
-                                    width: parent.width - 10
-                                    spacing: 3
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
+                                    Layout.preferredHeight: 90
+                                    Layout.minimumHeight: 90
+                                    Layout.maximumHeight: 90
+                                    radius: 10
+                                    color: cc.bgAlt2
 
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.day
-                                        color: cc.fg
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 16
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.icon
-                                        color: cc.fgDim
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 30
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.max + "\u00b0/" + modelData.min + "\u00b0"
-                                        color: cc.fg
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 14
-                                        font.bold: true
+                                    ColumnLayout {
+                                        id: dayCol
+                                        anchors.centerIn: parent
+                                        width: parent.width - 10
+                                        spacing: 3
+
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: modelData.day
+                                            color: cc.fg
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: modelData.icon
+                                            color: cc.fgDim
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 30
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: modelData.max + "\u00b0/" + modelData.min + "\u00b0"
+                                            color: cc.fg
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 14
+                                            font.bold: true
+                                        }
                                     }
                                 }
                             }
