@@ -1396,7 +1396,7 @@ PanelWindow {
                             text: cc.checkingUpdates
                                 ? "..."
                                 : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
-                            color: cc.updateCount > 0 ? cc.fg : cc.fgDim
+                            color: cc.checkingUpdates ? cc.fgDim : cc.fg
                             font.family: cc.fontFamily
                             font.pixelSize: 18
                             font.bold: true
