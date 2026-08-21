@@ -963,6 +963,9 @@ PanelWindow {
                             font.bold: true
                         }
 
+                        // Flexible spacer pushes the controls to the bottom.
+                        Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
                         // Progress bar.
                         RowLayout {
                             Layout.fillWidth: true
@@ -1028,9 +1031,6 @@ PanelWindow {
                                 font.bold: true
                             }
                         }
-
-                        // Flexible spacer pushes the controls to the bottom.
-                        Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
                         // Controls.
                         RowLayout {
