@@ -582,19 +582,6 @@ PanelWindow {
                         }
 
                         Text {
-                            text: "\u203a"
-                            color: cc.fg
-                            font.family: cc.fontFamily
-                            font.pixelSize: 24
-                            font.bold: true
-                            MouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -8
-                                onClicked: cc.shiftMonth(1)
-                            }
-                        }
-
-                        Text {
                             text: "\uf111" // small dot / today
                             color: (cc.viewYear !== cc.curYear || cc.viewMonth !== cc.curMonth) ? cc.fg : cc.fgDim
                             font.family: cc.fontFamily
@@ -607,6 +594,19 @@ PanelWindow {
                                     cc.viewYear = cc.curYear;
                                     cc.viewMonth = cc.curMonth;
                                 }
+                            }
+                        }
+
+                        Text {
+                            text: "\u203a"
+                            color: cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 24
+                            font.bold: true
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -8
+                                onClicked: cc.shiftMonth(1)
                             }
                         }
                     }
