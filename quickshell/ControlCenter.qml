@@ -1391,6 +1391,8 @@ PanelWindow {
 
                         // Status text: checkmark when up-to-date, update count when available.
                         Text {
+                            Layout.preferredWidth: 44
+                            horizontalAlignment: Text.AlignHCenter
                             text: cc.checkingUpdates
                                 ? "..."
                                 : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
