@@ -16,7 +16,7 @@ PanelWindow {
     property bool panelVisible: true
 
     // Re-check status each time the panel is opened.
-    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); }
+    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshMouseBattery(); }
 
     visible: panelVisible
 
@@ -83,16 +83,6 @@ PanelWindow {
     }
     readonly property bool hasMedia: mediaPlayer !== null
 
-    // Dropdown overlay state and geometry.
-    property bool showSinkDropdown: false
-    property bool showRateDropdown: false
-    property real sinkDropdownX: 0
-    property real sinkDropdownY: 0
-    property real sinkDropdownW: 0
-    property real rateDropdownX: 0
-    property real rateDropdownY: 0
-    property real rateDropdownW: 0
-
     function formatTime(seconds) {
         if (!isFinite(seconds) || seconds < 0) return "--:--";
         const m = Math.floor(seconds / 60);
@@ -123,98 +113,6 @@ PanelWindow {
 
     // ---- Audio (Pipewire) ----
     readonly property var audioSink: Pipewire.defaultAudioSink
-    readonly property var sinkList: {
-        const out = [];
-        for (const n of Pipewire.nodes.values) {
-            if (!n || !n.isSink || n.isStream) continue;
-            const label = (cc.sinkLabel(n) || "").toLowerCase();
-            const name = ("" + (n.name || "")).toLowerCase();
-            // Hide onboard/HDMI audio devices.
-            if (label.indexOf("high definition") >= 0) continue;
-            if (label.indexOf("built-in") >= 0 || label.indexOf("built in") >= 0) continue;
-            if (name.indexOf("hdmi") >= 0) continue;
-            out.push(n);
-        }
-        return out;
-    }
-    function sinkLabel(node) {
-        if (!node) return "";
-        return node.description || node.nickname || node.name || "Output";
-    }
-
-    // ---- Audio sample rate ----
-    readonly property var sampleRates: [0, 44100, 48000, 96000, 192000]
-    property int sampleRate: 0
-    property bool sampleRateForced: false
-    function rateLabel(rate) {
-        if (rate === 0) return "Auto";
-        return (rate / 1000).toFixed(1).replace(/\.0$/, "") + " kHz";
-    }
-
-    Process {
-        id: rateProc
-        command: [Quickshell.env("HOME") + "/Scripts/samplerate", "status"]
-        stdout: StdioCollector {
-            id: rateOut
-            onStreamFinished: {
-                // Output: "<forced 0|1> <effective rate>"
-                const parts = ("" + rateOut.text).trim().split(/\s+/);
-                cc.sampleRateForced = parts[0] === "1";
-                const n = parseInt(parts[1]);
-                cc.sampleRate = isNaN(n) ? 0 : n;
-            }
-        }
-    }
-
-    function refreshRate() { if (!rateProc.running) rateProc.running = true; }
-
-    function setRate(rate) {
-        const arg = rate === 0 ? "auto" : ("" + rate);
-        Quickshell.execDetached([Quickshell.env("HOME") + "/Scripts/samplerate", arg]);
-        rateRefreshTimer.restart();
-    }
-
-    function openSinkDropdown() {
-        if (!sinkSelector) return;
-        const p = sinkSelector.mapToItem(overlayLayer, 0, sinkSelector.height + 4);
-        cc.sinkDropdownX = p.x;
-        cc.sinkDropdownY = p.y;
-        cc.sinkDropdownW = sinkSelector.width;
-        cc.showRateDropdown = false;
-        cc.showSinkDropdown = true;
-    }
-
-    function openRateDropdown() {
-        if (!rateSelector) return;
-        const p = rateSelector.mapToItem(overlayLayer, 0, rateSelector.height + 4);
-        cc.rateDropdownX = p.x;
-        cc.rateDropdownY = p.y;
-        cc.rateDropdownW = rateSelector.width;
-        cc.showSinkDropdown = false;
-        cc.showRateDropdown = true;
-    }
-
-    function closeDropdowns() {
-        cc.showSinkDropdown = false;
-        cc.showRateDropdown = false;
-    }
-
-    Timer {
-        id: rateRefreshTimer
-        interval: 500
-        repeat: false
-        onTriggered: cc.refreshRate()
-    }
-
-    // Keep the default sink's audio data (volume/mute) live.
-    PwObjectTracker {
-        objects: {
-            const list = [];
-            if (cc.audioSink) list.push(cc.audioSink);
-            for (const n of cc.sinkList) list.push(n);
-            return list;
-        }
-    }
 
     // Current date parts (derived from the live clock).
     readonly property int curYear:  parseInt(Qt.formatDateTime(clock.date, "yyyy"))
@@ -418,7 +316,7 @@ PanelWindow {
 
     function refreshWeather() { weatherProc.running = true; }
 
-    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); }
+    Component.onCompleted: { refreshWeather(); refreshUpdates(); }
 
     // Refresh weather every 15 minutes while open.
     Timer {
@@ -538,12 +436,6 @@ PanelWindow {
     MouseArea {
         anchors.fill: parent
         onClicked: cc.requestClose()
-    }
-
-    // Overlay layer for dropdowns (sits above the panel).
-    Item {
-        id: overlayLayer
-        anchors.fill: parent
     }
 
     // The panel, anchored to the top-center.
@@ -1257,106 +1149,6 @@ PanelWindow {
                             }
                         }
 
-                        // Output device selector.
-                        Rectangle {
-                            id: sinkSelector
-                            Layout.fillWidth: true
-                            implicitHeight: 36
-                            radius: 8
-                            color: cc.bgAlt2
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                spacing: 8
-
-                                Text {
-                                    text: "\uf028" // speaker
-                                    color: cc.fgDim
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 14
-                                    font.bold: true
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: cc.sinkLabel(cc.audioSink)
-                                    color: cc.fg
-                                    elide: Text.ElideRight
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                }
-                                Text {
-                                    text: cc.showSinkDropdown ? "\uf077" : "\uf078" // chevron up / down
-                                    color: cc.fgDim
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: cc.showSinkDropdown ? cc.closeDropdowns() : cc.openSinkDropdown()
-                            }
-                        }
-
-                        // Sample rate selector.
-                        Rectangle {
-                            id: rateSelector
-                            Layout.fillWidth: true
-                            implicitHeight: 36
-                            radius: 8
-                            color: cc.bgAlt2
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                spacing: 8
-
-                                Text {
-                                    text: "\uf001" // note
-                                    color: cc.fgDim
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 14
-                                    font.bold: true
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: "Sample rate"
-                                    color: cc.fg
-                                    elide: Text.ElideRight
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                }
-                                Text {
-                                    text: cc.sampleRate > 0
-                                        ? (cc.sampleRateForced ? "" : "Auto ")
-                                          + (cc.sampleRate / 1000).toFixed(1).replace(/\.0$/, "") + " kHz"
-                                        : "--"
-                                    color: cc.fgDim
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-                                Text {
-                                    text: cc.showRateDropdown ? "\uf077" : "\uf078" // chevron up / down
-                                    color: cc.fgDim
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: cc.showRateDropdown ? cc.closeDropdowns() : cc.openRateDropdown()
-                            }
-                        }
-
                     }
                 }
 
@@ -1570,152 +1362,6 @@ PanelWindow {
 
             }
 
-            // Dropdown overlays.
-            Rectangle {
-                id: sinkDropdown
-                parent: overlayLayer
-                visible: cc.showSinkDropdown
-                x: cc.sinkDropdownX
-                y: cc.sinkDropdownY
-                width: cc.sinkDropdownW
-                implicitHeight: sinkDropdownCol.implicitHeight + 16
-                radius: 8
-                color: cc.bgAlt
-                border.color: cc.bgAlt2
-                border.width: 1
-                z: 101
-
-                ColumnLayout {
-                    id: sinkDropdownCol
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: 8
-                    spacing: 4
-
-                    Repeater {
-                        model: cc.sinkList
-                        Rectangle {
-                            required property var modelData
-                            readonly property bool isCurrent:
-                                cc.audioSink && modelData && modelData.id === cc.audioSink.id
-                            Layout.fillWidth: true
-                            implicitHeight: 28
-                            radius: 6
-                            color: isCurrent ? cc.accent : "transparent"
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
-                                spacing: 6
-                                Text {
-                                    text: isCurrent ? "\uf00c" : " "
-                                    color: cc.fg
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 11
-                                    font.bold: true
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: cc.sinkLabel(modelData)
-                                    color: cc.fg
-                                    elide: Text.ElideRight
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    Pipewire.preferredDefaultAudioSink = modelData;
-                                    cc.showSinkDropdown = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                id: rateDropdown
-                parent: overlayLayer
-                visible: cc.showRateDropdown
-                x: cc.rateDropdownX
-                y: cc.rateDropdownY
-                width: cc.rateDropdownW
-                implicitHeight: rateDropdownCol.implicitHeight + 16
-                radius: 8
-                color: cc.bgAlt
-                border.color: cc.bgAlt2
-                border.width: 1
-                z: 101
-
-                ColumnLayout {
-                    id: rateDropdownCol
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: 8
-                    spacing: 4
-
-                    Repeater {
-                        model: cc.sampleRates
-                        Rectangle {
-                            required property var modelData
-                            readonly property bool isCurrent:
-                                modelData === 0 ? !cc.sampleRateForced
-                                                : (cc.sampleRateForced && modelData === cc.sampleRate)
-                            Layout.fillWidth: true
-                            implicitHeight: 28
-                            radius: 6
-                            color: isCurrent ? cc.accent : "transparent"
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
-                                spacing: 6
-                                Text {
-                                    text: isCurrent ? "\uf00c" : " "
-                                    color: cc.fg
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 11
-                                    font.bold: true
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: cc.rateLabel(modelData)
-                                    color: cc.fg
-                                    elide: Text.ElideRight
-                                    font.family: cc.fontFamily
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    cc.setRate(modelData);
-                                    cc.showRateDropdown = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Click-catcher to close dropdowns when clicking outside.
-            MouseArea {
-                parent: overlayLayer
-                anchors.fill: parent
-                visible: cc.showSinkDropdown || cc.showRateDropdown
-                z: 100
-                onClicked: cc.closeDropdowns()
-            }
         }
     }
 }
