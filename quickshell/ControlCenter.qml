@@ -571,9 +571,9 @@ PanelWindow {
                             }
                         }
 
+                        Item { Layout.fillWidth: true }
+
                         Text {
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignHCenter
                             text: Qt.formatDateTime(new Date(cc.viewYear, cc.viewMonth, 1), "MMMM yyyy")
                             color: cc.fg
                             font.family: cc.fontFamily
@@ -583,7 +583,8 @@ PanelWindow {
 
                         Text {
                             text: "\uf111" // small dot / today
-                            color: (cc.viewYear !== cc.curYear || cc.viewMonth !== cc.curMonth) ? cc.fg : cc.fgDim
+                            visible: cc.viewYear !== cc.curYear || cc.viewMonth !== cc.curMonth
+                            color: cc.fg
                             font.family: cc.fontFamily
                             font.pixelSize: 12
                             font.bold: true
@@ -596,6 +597,8 @@ PanelWindow {
                                 }
                             }
                         }
+
+                        Item { Layout.fillWidth: true }
 
                         Text {
                             text: "\u203a"
