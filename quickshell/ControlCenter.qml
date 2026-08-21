@@ -91,6 +91,27 @@ PanelWindow {
         return m + ":" + (s < 10 ? "0" + s : s);
     }
 
+    // Polled position/length because MPRIS players do not continuously signal
+    // position changes. The seek itself still works via the player API.
+    property real currentPosition: 0
+    property real currentLength: 0
+
+    Timer {
+        id: positionTimer
+        interval: 500
+        running: cc.hasMedia && cc.mediaPlayer.positionSupported
+        repeat: true
+        onTriggered: {
+            if (cc.hasMedia) {
+                cc.currentPosition = cc.mediaPlayer.position;
+                cc.currentLength = cc.mediaPlayer.length;
+            } else {
+                cc.currentPosition = 0;
+                cc.currentLength = 0;
+            }
+        }
+    }
+
     // ---- Audio (Pipewire) ----
     readonly property var audioSink: Pipewire.defaultAudioSink
     readonly property var sinkList: {
@@ -107,8 +128,6 @@ PanelWindow {
         }
         return out;
     }
-    property bool showSinks: false
-
     function sinkLabel(node) {
         if (!node) return "";
         return node.description || node.nickname || node.name || "Output";
@@ -118,8 +137,6 @@ PanelWindow {
     readonly property var sampleRates: [0, 44100, 48000, 96000, 192000]
     property int sampleRate: 0
     property bool sampleRateForced: false
-    property bool showRates: false
-
     function rateLabel(rate) {
         if (rate === 0) return "Auto";
         return (rate / 1000).toFixed(1).replace(/\.0$/, "") + " kHz";
@@ -145,8 +162,33 @@ PanelWindow {
     function setRate(rate) {
         const arg = rate === 0 ? "auto" : ("" + rate);
         Quickshell.execDetached([Quickshell.env("HOME") + "/Scripts/samplerate", arg]);
-        cc.showRates = false;
         rateRefreshTimer.restart();
+    }
+
+    function cycleSink(direction) {
+        const list = cc.sinkList;
+        if (!list || list.length === 0) return;
+        const currentId = cc.audioSink ? cc.audioSink.id : null;
+        let idx = 0;
+        for (let i = 0; i < list.length; i++) {
+            if (list[i] && list[i].id === currentId) { idx = i; break; }
+        }
+        let next = idx + direction;
+        if (next < 0) next = list.length - 1;
+        if (next >= list.length) next = 0;
+        Pipewire.preferredDefaultAudioSink = list[next];
+    }
+
+    function cycleRate(direction) {
+        const list = cc.sampleRates;
+        let idx = 0;
+        for (let i = 0; i < list.length; i++) {
+            if (list[i] === cc.sampleRate) { idx = i; break; }
+        }
+        let next = idx + direction;
+        if (next < 0) next = list.length - 1;
+        if (next >= list.length) next = 0;
+        cc.setRate(list[next]);
     }
 
     Timer {
@@ -972,7 +1014,7 @@ PanelWindow {
                             spacing: 8
 
                             Text {
-                                text: cc.hasMedia && cc.mediaPlayer.positionSupported ? cc.formatTime(cc.mediaPlayer.position) : "--:--"
+                                text: cc.hasMedia && cc.mediaPlayer.positionSupported ? cc.formatTime(cc.currentPosition) : "--:--"
                                 color: cc.fgDim
                                 font.family: cc.fontFamily
                                 font.pixelSize: 11
@@ -992,8 +1034,8 @@ PanelWindow {
                                     radius: 3
                                     color: cc.fg
                                     width: {
-                                        if (!cc.hasMedia || !cc.mediaPlayer.positionSupported || !cc.mediaPlayer.lengthSupported || cc.mediaPlayer.length <= 0) return 0;
-                                        const pos = progressSlider.dragging ? progressSlider.seekPos : (cc.mediaPlayer.position / cc.mediaPlayer.length);
+                                        if (!cc.hasMedia || !cc.mediaPlayer.positionSupported || !cc.mediaPlayer.lengthSupported || cc.currentLength <= 0) return 0;
+                                        const pos = progressSlider.dragging ? progressSlider.seekPos : (cc.currentPosition / cc.currentLength);
                                         return Math.max(0, Math.min(1, pos)) * parent.width;
                                     }
                                 }
@@ -1004,15 +1046,15 @@ PanelWindow {
                                     anchors.margins: -6
                                     property real seekPos: 0
                                     property bool dragging: false
-                                    enabled: cc.hasMedia && cc.mediaPlayer.positionSupported && cc.mediaPlayer.lengthSupported && cc.mediaPlayer.length > 0 && cc.mediaPlayer.canSeek
+                                    enabled: cc.hasMedia && cc.mediaPlayer.positionSupported && cc.mediaPlayer.lengthSupported && cc.currentLength > 0 && cc.mediaPlayer.canSeek
                                     onPressed: (mouse) => { dragging = true; updateSeek(mouse.x); }
                                     onPositionChanged: (mouse) => { if (dragging) updateSeek(mouse.x); }
                                     onReleased: (mouse) => {
                                         if (dragging) {
                                             updateSeek(mouse.x);
-                                            if (cc.hasMedia && cc.mediaPlayer.length > 0) {
-                                                const target = seekPos * cc.mediaPlayer.length;
-                                                cc.mediaPlayer.seek(target - cc.mediaPlayer.position);
+                                            if (cc.hasMedia && cc.currentLength > 0) {
+                                                const target = seekPos * cc.currentLength;
+                                                cc.mediaPlayer.seek(target - cc.currentPosition);
                                             }
                                             dragging = false;
                                         }
@@ -1024,7 +1066,7 @@ PanelWindow {
                             }
 
                             Text {
-                                text: cc.hasMedia && cc.mediaPlayer.lengthSupported ? cc.formatTime(cc.mediaPlayer.length) : "--:--"
+                                text: cc.hasMedia && cc.mediaPlayer.lengthSupported ? cc.formatTime(cc.currentLength) : "--:--"
                                 color: cc.fgDim
                                 font.family: cc.fontFamily
                                 font.pixelSize: 11
@@ -1201,7 +1243,7 @@ PanelWindow {
                             }
                         }
 
-                        // Output device selector (expandable).
+                        // Output device selector (button style).
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 36
@@ -1226,74 +1268,41 @@ PanelWindow {
                                     text: cc.sinkLabel(cc.audioSink)
                                     color: cc.fg
                                     elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignHCenter
                                     font.family: cc.fontFamily
                                     font.pixelSize: 13
                                     font.bold: true
                                 }
                                 Text {
-                                    text: cc.showSinks ? "\uf077" : "\uf078" // chevron up / down
-                                    color: cc.fgDim
+                                    text: "\uf053" // chevron-left
+                                    color: cc.sinkList.length > 1 ? cc.fg : cc.fgDim
                                     font.family: cc.fontFamily
                                     font.pixelSize: 12
                                     font.bold: true
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: cc.showSinks = !cc.showSinks
-                            }
-                        }
-
-                        // Device list (shown when expanded).
-                        Repeater {
-                            model: cc.showSinks ? cc.sinkList : []
-
-                            Rectangle {
-                                required property var modelData
-                                readonly property bool isCurrent:
-                                    cc.audioSink && modelData && modelData.id === cc.audioSink.id
-
-                                Layout.fillWidth: true
-                                implicitHeight: 32
-                                radius: 8
-                                color: isCurrent ? cc.accent : "transparent"
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 12
-                                    anchors.rightMargin: 12
-                                    spacing: 8
-
-                                    Text {
-                                        text: isCurrent ? "\uf00c" : " " // check
-                                        color: cc.fg
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 12
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: cc.sinkLabel(modelData)
-                                        color: cc.fg
-                                        elide: Text.ElideRight
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 12
-                                        font.bold: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -8
+                                        enabled: cc.sinkList.length > 1
+                                        onClicked: cc.cycleSink(-1)
                                     }
                                 }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        Pipewire.preferredDefaultAudioSink = modelData;
-                                        cc.showSinks = false;
+                                Text {
+                                    text: "\uf054" // chevron-right
+                                    color: cc.sinkList.length > 1 ? cc.fg : cc.fgDim
+                                    font.family: cc.fontFamily
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -8
+                                        enabled: cc.sinkList.length > 1
+                                        onClicked: cc.cycleSink(1)
                                     }
                                 }
                             }
                         }
 
-                        // Sample rate selector (expandable).
+                        // Sample rate selector (button style).
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 36
@@ -1315,82 +1324,43 @@ PanelWindow {
                                 }
                                 Text {
                                     Layout.fillWidth: true
-                                    text: "Sample rate"
+                                    text: cc.rateLabel(cc.sampleRate)
                                     color: cc.fg
                                     elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignHCenter
                                     font.family: cc.fontFamily
                                     font.pixelSize: 13
                                     font.bold: true
                                 }
                                 Text {
-                                    text: cc.sampleRate > 0
-                                        ? (cc.sampleRateForced ? "" : "Auto ")
-                                          + (cc.sampleRate / 1000).toFixed(1).replace(/\.0$/, "") + " kHz"
-                                        : "--"
-                                    color: cc.fgDim
+                                    text: "\uf053" // chevron-left
+                                    color: cc.sampleRates.length > 1 ? cc.fg : cc.fgDim
                                     font.family: cc.fontFamily
                                     font.pixelSize: 12
                                     font.bold: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -8
+                                        enabled: cc.sampleRates.length > 1
+                                        onClicked: cc.cycleRate(-1)
+                                    }
                                 }
                                 Text {
-                                    text: cc.showRates ? "\uf077" : "\uf078" // chevron up / down
-                                    color: cc.fgDim
+                                    text: "\uf054" // chevron-right
+                                    color: cc.sampleRates.length > 1 ? cc.fg : cc.fgDim
                                     font.family: cc.fontFamily
                                     font.pixelSize: 12
                                     font.bold: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -8
+                                        enabled: cc.sampleRates.length > 1
+                                        onClicked: cc.cycleRate(1)
+                                    }
                                 }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: cc.showRates = !cc.showRates
                             }
                         }
 
-                        // Sample rate list (shown when expanded).
-                        Repeater {
-                            model: cc.showRates ? cc.sampleRates : []
-
-                            Rectangle {
-                                required property var modelData
-                                readonly property bool isCurrent:
-                                    modelData === 0 ? !cc.sampleRateForced
-                                                    : (cc.sampleRateForced && modelData === cc.sampleRate)
-
-                                Layout.fillWidth: true
-                                implicitHeight: 32
-                                radius: 8
-                                color: isCurrent ? cc.accent : "transparent"
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 12
-                                    anchors.rightMargin: 12
-                                    spacing: 8
-
-                                    Text {
-                                        text: isCurrent ? "\uf00c" : " " // check
-                                        color: cc.fg
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 12
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: cc.rateLabel(modelData)
-                                        color: cc.fg
-                                        font.family: cc.fontFamily
-                                        font.pixelSize: 12
-                                        font.bold: true
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: cc.setRate(modelData)
-                                }
-                            }
-                        }
                     }
                 }
 
