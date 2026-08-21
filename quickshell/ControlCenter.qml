@@ -348,9 +348,9 @@ PanelWindow {
                                 desc: cc.decodeCondition(tl.clouds_icon_wwsyn_icon, tl.clouds_shortText),
                                 icon: cc.conditionIcon(tl.clouds_icon_wwsyn_icon)
                             });
-                            if (hours.length >= 8) break;
+                            if (hours.length >= 12) break;
                         }
-                        if (hours.length >= 8) break;
+                        if (hours.length >= 12) break;
                     }
                     cc.wxHourly = hours;
 
