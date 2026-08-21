@@ -16,8 +16,8 @@ PanelWindow {
     // component stays loaded (weather already fetched) so it appears instantly.
     property bool panelVisible: true
 
-    // Re-check for updates each time the panel is opened.
-    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); }
+    // Re-check status each time the panel is opened.
+    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); }
 
     visible: panelVisible
 
@@ -48,7 +48,21 @@ PanelWindow {
     }
 
     // ---- Media (MPRIS) ----
-    // Only control Spotify.
+    // Control any MPRIS-compatible player, but ignore browser players.
+    // Prefer one that is currently playing, otherwise fall back to the first
+    // available real player.
+    function isBrowserPlayer(dbus, ident) {
+        const browsers = [
+            "chromium", "chrome", "firefox", "brave", "edge", "opera",
+            "vivaldi", "qutebrowser", "waterfox", "librewolf", "zen"
+        ];
+        const name = (dbus + " " + ident).toLowerCase();
+        for (const b of browsers) {
+            if (name.indexOf(b) >= 0) return true;
+        }
+        return false;
+    }
+
     readonly property var mediaPlayer: {
         const list = Mpris.players.values;
         if (!list || list.length === 0) return null;
@@ -56,7 +70,15 @@ PanelWindow {
             if (!p) continue;
             const dbus = ("" + (p.dbusName || "")).toLowerCase();
             const ident = ("" + (p.identity || "")).toLowerCase();
-            if (dbus.indexOf("spotify") >= 0 || ident.indexOf("spotify") >= 0) return p;
+            if (isBrowserPlayer(dbus, ident)) continue;
+            if (p.isPlaying) return p;
+        }
+        for (const p of list) {
+            if (!p) continue;
+            const dbus = ("" + (p.dbusName || "")).toLowerCase();
+            const ident = ("" + (p.identity || "")).toLowerCase();
+            if (isBrowserPlayer(dbus, ident)) continue;
+            return p;
         }
         return null;
     }
@@ -387,6 +409,40 @@ PanelWindow {
         if (!rebootProc.running) rebootProc.running = true;
     }
 
+    // ---- Mouse battery (Logitech PRO X 2 via Solaar) ----
+    property int mouseBatteryPct: -1
+
+    Process {
+        id: solaarBatteryProc
+        command: [cc.scriptDir + "/solaar-mouse-battery"]
+        stdout: StdioCollector {
+            id: solaarBatteryOut
+            onStreamFinished: {
+                const raw = ("" + solaarBatteryOut.text).trim();
+                if (raw === "N/A") {
+                    cc.mouseBatteryPct = -1;
+                    return;
+                }
+                const n = parseInt(raw);
+                cc.mouseBatteryPct = (isNaN(n) || n < 0 || n > 100) ? -1 : n;
+            }
+        }
+    }
+
+    function refreshMouseBattery() {
+        if (!solaarBatteryProc.running) solaarBatteryProc.running = true;
+    }
+
+    function mouseBatteryIcon() {
+        const pct = cc.mouseBatteryPct;
+        if (pct < 0) return "\uf244"; // unknown -> empty
+        if (pct <= 10) return "\uf244"; // battery-empty
+        if (pct <= 35) return "\uf243"; // battery-quarter
+        if (pct <= 60) return "\uf242"; // battery-half
+        if (pct <= 85) return "\uf241"; // battery-three-quarters
+        return "\uf240"; // battery-full
+    }
+
     function runUpdate() {
         Quickshell.execDetached(["ghostty", "--confirm-close-surface=false",
             "-e", cc.scriptDir + "/update-all"]);
@@ -404,6 +460,14 @@ PanelWindow {
         running: true
         repeat: true
         onTriggered: cc.refreshUpdates()
+    }
+
+    // Refresh mouse battery every 60 seconds.
+    Timer {
+        interval: 60 * 1000
+        running: true
+        repeat: true
+        onTriggered: cc.refreshMouseBattery()
     }
 
     // Close on Escape.
@@ -803,7 +867,7 @@ PanelWindow {
                 Layout.preferredWidth: 300
                 Layout.fillHeight: true
                 Layout.alignment: Qt.AlignTop
-                spacing: 20
+                spacing: 16
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -815,7 +879,7 @@ PanelWindow {
                     Text {
                         anchors.centerIn: parent
                         visible: !cc.hasMedia
-                        text: "Spotify not running"
+                        text: "No media player"
                         color: cc.fgDim
                         font.family: cc.fontFamily
                         font.pixelSize: 14
@@ -842,8 +906,8 @@ PanelWindow {
                         // Album art.
                         Rectangle {
                             Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 180
-                            Layout.preferredHeight: 180
+                            Layout.preferredWidth: 130
+                            Layout.preferredHeight: 130
                             radius: 10
                             color: cc.bgAlt2
                             clip: true
@@ -864,7 +928,7 @@ PanelWindow {
                                 text: "\uf001" // music note (nerd font)
                                 color: cc.fgDim
                                 font.family: cc.fontFamily
-                                font.pixelSize: 48
+                                font.pixelSize: 36
                                 font.bold: true
                             }
                         }
@@ -1227,6 +1291,58 @@ PanelWindow {
                     }
                 }
 
+                // ---- Mouse battery widget ----
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 56
+                    radius: 12
+                    color: cc.bgAlt
+                    visible: cc.mouseBatteryPct >= 0
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
+                        spacing: 12
+
+                        Text {
+                            text: cc.mouseBatteryIcon()
+                            color: cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 20
+                            font.bold: true
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+
+                            Text {
+                                text: "Mouse"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 15
+                                font.bold: true
+                            }
+                            Text {
+                                text: "Logitech PRO X 2"
+                                color: cc.fgDim
+                                font.family: cc.fontFamily
+                                font.pixelSize: 11
+                                font.bold: true
+                            }
+                        }
+
+                        Text {
+                            text: cc.mouseBatteryPct + "%"
+                            color: cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 16
+                            font.bold: true
+                        }
+                    }
+                }
+
                 // ---- Updates widget ----
                 Rectangle {
                     Layout.fillWidth: true
@@ -1435,7 +1551,7 @@ PanelWindow {
                                     // Preferred menu entries to auto-trigger on left-click,
                                     // matched case-insensitively in order. First match wins.
                                     readonly property var openLabels: [
-                                        "show spotify", "show", "open", "library"
+                                        "show", "open", "library"
                                     ]
 
                                     // Keeps the menu entries available for auto-triggering.
@@ -1478,7 +1594,7 @@ PanelWindow {
                                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                                         onClicked: (mouse) => {
                                             if (mouse.button === Qt.LeftButton) {
-                                                // Prefer a menu entry like "Show Spotify" or
+                                                // Prefer a menu entry like "Show" / "Open" /
                                                 // "Library" (Steam); fall back to activation.
                                                 if (!trayItem.triggerOpenEntry()) {
                                                     modelData.activate();

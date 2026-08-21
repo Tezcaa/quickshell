@@ -5,13 +5,39 @@
 
 set -o pipefail
 
+# Packages to skip during the upgrade. heroic-games-launcher pulls in
+# nodejs-lts-krypton as a make-dep, which conflicts with the installed nodejs
+# (required by stremio-linux-shell) and aborts the whole transaction.
+# Add space-separated package names here to exclude them.
+IGNORE_PKGS="heroic-games-launcher"
+
+# Acquire sudo credentials up front, in this terminal, so the later
+# yay/pacman calls don't fail with "sudo: a terminal is required" when the
+# script is launched detached (e.g. from quickshell via ghostty -e).
+echo -e "\e[32m==> Authenticating (sudo)...\e[0m"
+if ! sudo -v; then
+  echo -e "\e[31mFailed to obtain sudo credentials. Aborting.\e[0m"
+  read -r -p "Press Enter to close."
+  exit 1
+fi
+# Keep the sudo timestamp fresh while the (possibly long) update runs.
+( while true; do sudo -n true; sleep 60; done ) &
+sudo_keepalive_pid=$!
+trap 'kill "$sudo_keepalive_pid" 2>/dev/null' EXIT
+
+# Build the --ignore argument list from IGNORE_PKGS.
+ignore_args=()
+for p in $IGNORE_PKGS; do
+  ignore_args+=(--ignore "$p")
+done
+
 echo -e "\e[32m==> Updating system packages (pacman + AUR)...\e[0m"
 if command -v yay >/dev/null 2>&1; then
   # --removemake: clean build deps; --answer* skip yay's interactive menus;
   # --noconfirm: skip the pacman "packages to exclude" / confirmation prompts.
-  yay -Syu --noconfirm --removemake --answerclean All --answerdiff None
+  yay -Syu --noconfirm --removemake --answerclean All --answerdiff None "${ignore_args[@]}"
 else
-  sudo pacman -Syu --noconfirm
+  sudo pacman -Syu --noconfirm "${ignore_args[@]}"
 fi
 
 if command -v flatpak >/dev/null 2>&1; then

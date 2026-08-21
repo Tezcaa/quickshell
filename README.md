@@ -1,7 +1,7 @@
 # Quickshell Desktop Setup
 
 A monochrome Quickshell desktop shell: app launcher, package manager menu,
-control center (clock, calendar, ARSO weather, Spotify media controls, volume,
+control center (clock, calendar, ARSO weather, MPRIS media controls, volume,
 system tray, updates, power buttons), a lock screen, and notifications.
 
 ## Contents
