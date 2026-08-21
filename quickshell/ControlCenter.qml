@@ -114,6 +114,15 @@ PanelWindow {
     // ---- Audio (Pipewire) ----
     readonly property var audioSink: Pipewire.defaultAudioSink
 
+    // Keep the default sink's audio data (volume/mute) live.
+    PwObjectTracker {
+        objects: {
+            const list = [];
+            if (cc.audioSink) list.push(cc.audioSink);
+            return list;
+        }
+    }
+
     // Current date parts (derived from the live clock).
     readonly property int curYear:  parseInt(Qt.formatDateTime(clock.date, "yyyy"))
     readonly property int curMonth: parseInt(Qt.formatDateTime(clock.date, "M")) - 1
