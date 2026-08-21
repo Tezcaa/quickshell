@@ -1389,26 +1389,15 @@ PanelWindow {
                             font.bold: true
                         }
 
-                        // Status badge: checkmark when up-to-date, update count when available.
-                        Rectangle {
-                            Layout.preferredWidth: Math.max(26, statusText.implicitWidth + 14)
-                            Layout.preferredHeight: 26
-                            radius: 13
-                            color: cc.updateCount > 0 ? cc.fg : "transparent"
-                            border.color: cc.updateCount > 0 ? "transparent" : cc.fg
-                            border.width: cc.updateCount > 0 ? 0 : 1
-
-                            Text {
-                                id: statusText
-                                anchors.centerIn: parent
-                                text: cc.checkingUpdates
-                                    ? "..."
-                                    : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
-                                color: cc.updateCount > 0 ? cc.bg : cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 13
-                                font.bold: true
-                            }
+                        // Status text: checkmark when up-to-date, update count when available.
+                        Text {
+                            text: cc.checkingUpdates
+                                ? "..."
+                                : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
+                            color: cc.updateCount > 0 ? cc.fg : cc.fgDim
+                            font.family: cc.fontFamily
+                            font.pixelSize: 13
+                            font.bold: true
                         }
                     }
 
