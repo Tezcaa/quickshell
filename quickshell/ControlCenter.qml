@@ -978,6 +978,9 @@ PanelWindow {
                             font.bold: true
                         }
 
+                        // Spacer pushes the progress bar and controls to the bottom.
+                        Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
                         // Progress bar.
                         RowLayout {
                             Layout.fillWidth: true
@@ -993,15 +996,15 @@ PanelWindow {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 6
-                                radius: 3
+                                Layout.preferredHeight: 10
+                                radius: 5
                                 color: cc.bgAlt2
 
                                 Rectangle {
                                     anchors.left: parent.left
                                     anchors.top: parent.top
                                     anchors.bottom: parent.bottom
-                                    radius: 3
+                                    radius: 5
                                     color: cc.fg
                                     width: {
                                         if (!cc.hasMedia || !cc.mediaPlayer.positionSupported || !cc.mediaPlayer.lengthSupported || cc.currentLength <= 0) return 0;
