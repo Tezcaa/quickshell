@@ -1353,7 +1353,7 @@ PanelWindow {
                             Layout.preferredHeight: 26
                             radius: 13
                             color: cc.updateCount > 0 ? cc.fg : "transparent"
-                            border.color: cc.updateCount > 0 ? "transparent" : cc.fgDim
+                            border.color: cc.updateCount > 0 ? "transparent" : cc.fg
                             border.width: cc.updateCount > 0 ? 0 : 1
 
                             Text {
@@ -1362,7 +1362,7 @@ PanelWindow {
                                 text: cc.checkingUpdates
                                     ? "..."
                                     : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
-                                color: cc.updateCount > 0 ? cc.bg : cc.fgDim
+                                color: cc.updateCount > 0 ? cc.bg : cc.fg
                                 font.family: cc.fontFamily
                                 font.pixelSize: 13
                                 font.bold: true
