@@ -16,7 +16,7 @@ PanelWindow {
     property bool panelVisible: true
 
     // Re-check status each time the panel is opened.
-    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshMouseBattery(); }
+    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); }
 
     visible: panelVisible
 
@@ -121,6 +121,46 @@ PanelWindow {
             if (cc.audioSink) list.push(cc.audioSink);
             return list;
         }
+    }
+
+    // ---- Audio sample rate ----
+    readonly property var sampleRates: [0, 44100, 48000, 96000, 192000]
+    property int sampleRate: 0
+    property bool sampleRateForced: false
+
+    function rateLabel(rate) {
+        if (rate === 0) return "Auto";
+        return (rate / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+    }
+
+    function setRate(rate) {
+        const arg = rate === 0 ? "auto" : ("" + rate);
+        Quickshell.execDetached([Quickshell.env("HOME") + "/Scripts/samplerate", arg]);
+        rateRefreshTimer.restart();
+    }
+
+    Process {
+        id: rateProc
+        command: [Quickshell.env("HOME") + "/Scripts/samplerate", "status"]
+        stdout: StdioCollector {
+            id: rateOut
+            onStreamFinished: {
+                // Output: "<forced 0|1> <effective rate>"
+                const parts = ("" + rateOut.text).trim().split(/\s+/);
+                cc.sampleRateForced = parts[0] === "1";
+                const n = parseInt(parts[1]);
+                cc.sampleRate = isNaN(n) ? 0 : n;
+            }
+        }
+    }
+
+    function refreshRate() { if (!rateProc.running) rateProc.running = true; }
+
+    Timer {
+        id: rateRefreshTimer
+        interval: 500
+        repeat: false
+        onTriggered: cc.refreshRate()
     }
 
     // Current date parts (derived from the live clock).
@@ -325,7 +365,7 @@ PanelWindow {
 
     function refreshWeather() { weatherProc.running = true; }
 
-    Component.onCompleted: { refreshWeather(); refreshUpdates(); }
+    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); }
 
     // Refresh weather every 15 minutes while open.
     Timer {
@@ -1155,6 +1195,40 @@ PanelWindow {
                                 font.family: cc.fontFamily
                                 font.pixelSize: 13
                                 font.bold: true
+                            }
+                        }
+
+                        // Sample rate buttons.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Repeater {
+                                model: cc.sampleRates
+                                Rectangle {
+                                    required property var modelData
+                                    readonly property bool isCurrent:
+                                        modelData === 0 ? !cc.sampleRateForced
+                                                        : (cc.sampleRateForced && modelData === cc.sampleRate)
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 28
+                                    radius: 6
+                                    color: isCurrent ? cc.fg : cc.bgAlt2
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: cc.rateLabel(modelData)
+                                        color: parent.isCurrent ? cc.bg : cc.fgDim
+                                        font.family: cc.fontFamily
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: cc.setRate(modelData)
+                                    }
+                                }
                             }
                         }
 
