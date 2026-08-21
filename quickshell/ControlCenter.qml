@@ -1335,17 +1335,6 @@ PanelWindow {
                                 font.pixelSize: 15
                                 font.bold: true
                             }
-                            Text {
-                                text: cc.checkingUpdates
-                                    ? "checking…"
-                                    : (cc.updateCount > 0
-                                        ? cc.updateCount + " update" + (cc.updateCount === 1 ? "" : "s") + " available"
-                                        : "up to date")
-                                color: cc.updateCount > 0 ? cc.fg : cc.fgDim
-                                font.family: cc.fontFamily
-                                font.pixelSize: 11
-                                font.bold: true
-                            }
                         }
 
                         // Reboot-needed indicator (right side).
@@ -1358,19 +1347,22 @@ PanelWindow {
                             font.bold: true
                         }
 
-                        // Update count badge.
+                        // Status badge: checkmark when up-to-date, update count when available.
                         Rectangle {
-                            visible: cc.updateCount > 0
-                            Layout.preferredWidth: Math.max(26, badgeText.implicitWidth + 14)
+                            Layout.preferredWidth: Math.max(26, statusText.implicitWidth + 14)
                             Layout.preferredHeight: 26
                             radius: 13
-                            color: cc.fg
+                            color: cc.updateCount > 0 ? cc.fg : "transparent"
+                            border.color: cc.updateCount > 0 ? "transparent" : cc.fgDim
+                            border.width: cc.updateCount > 0 ? 0 : 1
 
                             Text {
-                                id: badgeText
+                                id: statusText
                                 anchors.centerIn: parent
-                                text: cc.updateCount
-                                color: cc.bg
+                                text: cc.checkingUpdates
+                                    ? "..."
+                                    : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
+                                color: cc.updateCount > 0 ? cc.bg : cc.fgDim
                                 font.family: cc.fontFamily
                                 font.pixelSize: 13
                                 font.bold: true
