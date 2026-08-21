@@ -176,7 +176,7 @@ PanelWindow {
 
     function openSinkDropdown() {
         if (!sinkSelector) return;
-        const p = sinkSelector.mapToItem(cc, 0, sinkSelector.height + 4);
+        const p = sinkSelector.mapToItem(overlayLayer, 0, sinkSelector.height + 4);
         cc.sinkDropdownX = p.x;
         cc.sinkDropdownY = p.y;
         cc.sinkDropdownW = sinkSelector.width;
@@ -186,7 +186,7 @@ PanelWindow {
 
     function openRateDropdown() {
         if (!rateSelector) return;
-        const p = rateSelector.mapToItem(cc, 0, rateSelector.height + 4);
+        const p = rateSelector.mapToItem(overlayLayer, 0, rateSelector.height + 4);
         cc.rateDropdownX = p.x;
         cc.rateDropdownY = p.y;
         cc.rateDropdownW = rateSelector.width;
@@ -538,6 +538,12 @@ PanelWindow {
     MouseArea {
         anchors.fill: parent
         onClicked: cc.requestClose()
+    }
+
+    // Overlay layer for dropdowns (sits above the panel).
+    Item {
+        id: overlayLayer
+        anchors.fill: parent
     }
 
     // The panel, anchored to the top-center.
@@ -1567,7 +1573,7 @@ PanelWindow {
             // Dropdown overlays.
             Rectangle {
                 id: sinkDropdown
-                parent: cc
+                parent: overlayLayer
                 visible: cc.showSinkDropdown
                 x: cc.sinkDropdownX
                 y: cc.sinkDropdownY
@@ -1635,7 +1641,7 @@ PanelWindow {
 
             Rectangle {
                 id: rateDropdown
-                parent: cc
+                parent: overlayLayer
                 visible: cc.showRateDropdown
                 x: cc.rateDropdownX
                 y: cc.rateDropdownY
@@ -1704,7 +1710,7 @@ PanelWindow {
 
             // Click-catcher to close dropdowns when clicking outside.
             MouseArea {
-                parent: cc
+                parent: overlayLayer
                 anchors.fill: parent
                 visible: cc.showSinkDropdown || cc.showRateDropdown
                 z: 100
