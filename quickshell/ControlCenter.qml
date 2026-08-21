@@ -907,9 +907,7 @@ PanelWindow {
 
                     ColumnLayout {
                         id: mediaCol
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
+                        anchors.fill: parent
                         anchors.margins: 16
                         spacing: 12
                         visible: cc.hasMedia
