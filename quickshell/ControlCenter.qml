@@ -189,7 +189,7 @@ PanelWindow {
         const cells = [];
         for (let i = 0; i < startDay; i++) cells.push(0);
         for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-        while (cells.length % 7 !== 0) cells.push(0);
+        while (cells.length < 42) cells.push(0);
         return cells;
     }
 
