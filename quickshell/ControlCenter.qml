@@ -516,6 +516,7 @@ PanelWindow {
 
             // ---- Clock widget ----
             Rectangle {
+                id: clockRect
                 Layout.fillWidth: true
                 implicitHeight: clockCol.implicitHeight + 32
                 radius: 12
@@ -539,6 +540,7 @@ PanelWindow {
 
             // ---- Calendar widget ----
             Rectangle {
+                id: calendarRect
                 Layout.fillWidth: true
                 implicitHeight: calCol.implicitHeight + 24
                 radius: 12
@@ -890,7 +892,7 @@ PanelWindow {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 420
+                    Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height
                     radius: 12
                     color: cc.bgAlt
 
