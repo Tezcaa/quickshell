@@ -890,6 +890,7 @@ PanelWindow {
 
                 Rectangle {
                     Layout.fillWidth: true
+                    Layout.preferredHeight: mediaCol.implicitHeight + 32
                     radius: 12
                     color: cc.bgAlt
 
@@ -905,10 +906,10 @@ PanelWindow {
                     }
 
                     ColumnLayout {
+                        id: mediaCol
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.bottom: parent.bottom
                         anchors.margins: 16
                         spacing: 12
                         visible: cc.hasMedia
@@ -976,9 +977,6 @@ PanelWindow {
                             font.pixelSize: 13
                             font.bold: true
                         }
-
-                        // Flexible spacer pushes the controls to the bottom.
-                        Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
                         // Progress bar.
                         RowLayout {
