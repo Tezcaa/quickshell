@@ -1221,9 +1221,11 @@ PanelWindow {
                         implicitHeight: 68
                         radius: 12
                         color: cc.bgAlt
+                        clip: true
 
                         Text {
                             anchors.centerIn: parent
+                            width: parent.width
                             text: "\uf2db\n" + Math.round(cc.cpuPercent) + "%"
                             color: cc.fg
                             font.family: cc.fontFamily
@@ -1241,13 +1243,15 @@ PanelWindow {
                         implicitHeight: 68
                         radius: 12
                         color: cc.bgAlt
+                        clip: true
 
                         Text {
                             anchors.centerIn: parent
-                            text: "\uf0a0\n" + cc.ramUsedGb.toFixed(1) + " / " + cc.ramTotalGb.toFixed(1) + " GB"
+                            width: parent.width
+                            text: "\uf0a0\n" + cc.ramUsedGb.toFixed(1) + "/" + cc.ramTotalGb.toFixed(1) + " GB"
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 14
+                            font.pixelSize: 12
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
                             lineHeight: 1.3
@@ -1261,9 +1265,11 @@ PanelWindow {
                         implicitHeight: 68
                         radius: 12
                         color: cc.bgAlt
+                        clip: true
 
                         Text {
                             anchors.centerIn: parent
+                            width: parent.width
                             text: "\uf26c\n" + Math.round(cc.gpuPercent) + "%"
                             color: cc.fg
                             font.family: cc.fontFamily
