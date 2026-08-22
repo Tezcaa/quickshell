@@ -610,7 +610,7 @@ PanelWindow {
             ColumnLayout {
                 id: content
                 Layout.preferredWidth: 460
-                Layout.alignment: Qt.AlignTop
+                Layout.fillHeight: true
                 spacing: 20
 
             // ---- Clock widget ----
