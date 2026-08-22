@@ -533,7 +533,7 @@ PanelWindow {
         Rectangle {
             id: panel
             width: mainRow.implicitWidth + 52
-            height: content.implicitHeight + 52
+            height: mainRow.implicitHeight + 52
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 12
@@ -549,7 +549,9 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: 26
+            anchors.topMargin: 0
+            anchors.leftMargin: 26
+            anchors.rightMargin: 26
             spacing: 20
 
             ColumnLayout {
