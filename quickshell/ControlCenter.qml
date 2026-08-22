@@ -1522,70 +1522,6 @@ PanelWindow {
                     }
                 }
 
-                // ---- Updates widget ----
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 56
-                    radius: 12
-                    color: cc.bgAlt
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 16
-                        anchors.rightMargin: 16
-                        spacing: 12
-
-                        Text {
-                            text: "\uf021" // refresh/sync icon
-                            color: cc.fg
-                            font.family: cc.fontFamily
-                            font.pixelSize: 20
-                            font.bold: true
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
-
-                            Text {
-                                text: "Update All"
-                                color: cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 15
-                                font.bold: true
-                            }
-                        }
-
-                        // Reboot-needed indicator (right side).
-                        Text {
-                            visible: cc.rebootNeeded
-                            text: "\uf021 reboot"
-                            color: cc.critical
-                            font.family: cc.fontFamily
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
-
-                        // Status text: checkmark when up-to-date, update count when available.
-                        Text {
-                            Layout.preferredWidth: 44
-                            horizontalAlignment: Text.AlignHCenter
-                            text: cc.checkingUpdates
-                                ? "..."
-                                : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
-                            color: cc.checkingUpdates ? cc.fgDim : cc.fg
-                            font.family: cc.fontFamily
-                            font.pixelSize: 18
-                            font.bold: true
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: cc.runUpdate()
-                    }
-                }
-
                 // ---- Calculator widget ----
                 Rectangle {
                     Layout.fillWidth: true
@@ -1663,6 +1599,34 @@ PanelWindow {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
+
+                    // Update
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 12
+                        color: updateArea.containsMouse ? cc.accent : cc.bgAlt
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: cc.checkingUpdates
+                                ? "\uf021\n..."
+                                : (cc.updateCount > 0 ? "\uf021\n" + cc.updateCount : "\uf021\n\uf00c")
+                            color: cc.checkingUpdates ? cc.fgDim : cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 18
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            lineHeight: 1.3
+                        }
+                        MouseArea {
+                            id: updateArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: cc.runUpdate()
+                        }
+                    }
 
                     // Shutdown
                     Rectangle {
