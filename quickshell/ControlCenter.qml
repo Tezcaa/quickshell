@@ -610,7 +610,6 @@ PanelWindow {
             ColumnLayout {
                 id: content
                 Layout.preferredWidth: 460
-                Layout.fillHeight: true
                 spacing: 20
 
             // ---- Clock widget ----
@@ -1006,7 +1005,7 @@ PanelWindow {
             // ---- Media control column (right side) ----
             ColumnLayout {
                 Layout.preferredWidth: 300
-                Layout.fillHeight: true
+                Layout.preferredHeight: content.implicitHeight
                 spacing: 16
 
                 Rectangle {
