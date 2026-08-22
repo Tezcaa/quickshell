@@ -1008,7 +1008,7 @@ PanelWindow {
                 Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
                 Layout.minimumHeight: Layout.preferredHeight
                 Layout.maximumHeight: Layout.preferredHeight
-                spacing: 16
+                spacing: 10
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -1277,7 +1277,7 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 86
-                        implicitHeight: 86
+                        implicitHeight: 56
                         radius: 12
                         color: cc.bgAlt
                         clip: true
@@ -1289,7 +1289,7 @@ PanelWindow {
                             text: "\uf2db\n" + Math.round(cc.cpuPercent) + "%"
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 16
+                            font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -1301,21 +1301,21 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 86
-                        implicitHeight: 86
+                        implicitHeight: 56
                         radius: 12
                         color: cc.bgAlt
                         clip: true
 
                         ColumnLayout {
                             anchors.centerIn: parent
-                            spacing: 4
+                            spacing: 0
 
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: "\uf0a0"
                                 color: cc.fg
                                 font.family: cc.fontFamily
-                                font.pixelSize: 14
+                                font.pixelSize: 12
                                 font.bold: true
                             }
 
@@ -1325,7 +1325,7 @@ PanelWindow {
                                 text: cc.ramUsedGb.toFixed(1) + " GB"
                                 color: cc.fg
                                 font.family: cc.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: 10
                                 font.bold: true
                             }
 
@@ -1342,7 +1342,7 @@ PanelWindow {
                                 text: cc.ramTotalGb.toFixed(1) + " GB"
                                 color: cc.fg
                                 font.family: cc.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: 10
                                 font.bold: true
                             }
                         }
@@ -1352,7 +1352,7 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 86
-                        implicitHeight: 86
+                        implicitHeight: 56
                         radius: 12
                         color: cc.bgAlt
                         clip: true
@@ -1364,7 +1364,7 @@ PanelWindow {
                             text: "\uf26c\n" + Math.round(cc.gpuPercent) + "%"
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 16
+                            font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -1385,13 +1385,13 @@ PanelWindow {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 16
-                        spacing: 12
+                        anchors.margins: 12
+                        spacing: 8
 
                         // Volume row: icon + slider.
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 12
+                            spacing: 8
 
                             // Volume / mute icon (click to toggle mute).
                             Text {
@@ -1406,7 +1406,7 @@ PanelWindow {
                                 }
                                 color: cc.fg
                                 font.family: cc.fontFamily
-                                font.pixelSize: 22
+                                font.pixelSize: 18
                                 font.bold: true
                                 MouseArea {
                                     anchors.fill: parent
@@ -1420,8 +1420,8 @@ PanelWindow {
                             Rectangle {
                                 id: sliderTrack
                                 Layout.fillWidth: true
-                                implicitHeight: 8
-                                radius: 4
+                                implicitHeight: 6
+                                radius: 3
                                 color: cc.bgAlt2
 
                                 readonly property real vol:
@@ -1475,7 +1475,7 @@ PanelWindow {
                                         modelData === 0 ? !cc.sampleRateForced
                                                         : (cc.sampleRateForced && modelData === cc.sampleRate)
                                     Layout.fillWidth: true
-                                    Layout.preferredHeight: 28
+                                    Layout.preferredHeight: 24
                                     radius: 6
                                     color: isCurrent ? cc.fg : cc.bgAlt2
 
@@ -1484,7 +1484,7 @@ PanelWindow {
                                         text: cc.rateLabel(modelData)
                                         color: parent.isCurrent ? cc.bg : cc.fgDim
                                         font.family: cc.fontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: 10
                                         font.bold: true
                                     }
 
@@ -1502,7 +1502,7 @@ PanelWindow {
                 // ---- Mouse battery widget ----
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 56
+                    implicitHeight: 40
                     radius: 12
                     color: cc.bgAlt
 
@@ -1516,7 +1516,7 @@ PanelWindow {
                             text: cc.mouseBatteryIcon()
                             color: cc.mouseBatteryPct >= 0 && cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 20
+                            font.pixelSize: 16
                             font.bold: true
                         }
 
@@ -1528,14 +1528,14 @@ PanelWindow {
                                 text: "Mouse"
                                 color: cc.fg
                                 font.family: cc.fontFamily
-                                font.pixelSize: 15
+                                font.pixelSize: 13
                                 font.bold: true
                             }
                             Text {
                                 text: "Logitech PRO X 2"
                                 color: cc.fgDim
                                 font.family: cc.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: 10
                                 font.bold: true
                             }
                         }
@@ -1544,7 +1544,7 @@ PanelWindow {
                             text: cc.mouseBatteryPct >= 0 ? cc.mouseBatteryPct + "%" : "--"
                             color: cc.mouseBatteryPct >= 0 && cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 16
+                            font.pixelSize: 14
                             font.bold: true
                         }
                     }
@@ -1553,7 +1553,7 @@ PanelWindow {
                 // ---- Calculator widget ----
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: calcCol.implicitHeight + 32
+                    Layout.preferredHeight: calcCol.implicitHeight + 24
                     radius: 12
                     color: cc.bgAlt
 
@@ -1562,24 +1562,24 @@ PanelWindow {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 16
-                        spacing: 12
+                        anchors.margins: 12
+                        spacing: 8
 
                         // Input field.
                         Rectangle {
                             Layout.fillWidth: true
-                            implicitHeight: 42
+                            implicitHeight: 32
                             radius: 8
                             color: cc.bgAlt2
 
                             TextInput {
                                 id: calcInput
                                 anchors.fill: parent
-                                anchors.margins: 10
+                                anchors.margins: 8
                                 text: cc.calcDisplay
                                 color: cc.fg
                                 font.family: cc.fontFamily
-                                font.pixelSize: 20
+                                font.pixelSize: 16
                                 font.bold: true
                                 horizontalAlignment: Text.AlignRight
                                 verticalAlignment: Text.AlignVCenter
@@ -1593,14 +1593,14 @@ PanelWindow {
                         // Operator buttons.
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: 6
 
                             Repeater {
                                 model: ["C", "+", "-", "*", "/", "="]
                                 Rectangle {
                                     Layout.fillWidth: true
-                                    implicitHeight: 38
-                                    radius: 8
+                                    implicitHeight: 28
+                                    radius: 6
                                     color: calcOpArea.containsMouse ? cc.accent : cc.bgAlt2
 
                                     Text {
@@ -1608,7 +1608,7 @@ PanelWindow {
                                         text: modelData
                                         color: cc.fg
                                         font.family: cc.fontFamily
-                                        font.pixelSize: 18
+                                        font.pixelSize: 14
                                         font.bold: true
                                     }
                                     MouseArea {
@@ -1631,7 +1631,7 @@ PanelWindow {
                     // Update
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 52
+                        implicitHeight: 40
                         radius: 12
                         color: updateArea.containsMouse ? cc.accent : cc.bgAlt
 
@@ -1642,7 +1642,7 @@ PanelWindow {
                                 : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
                             color: cc.checkingUpdates ? cc.fgDim : cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 22
+                            font.pixelSize: 18
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -1659,7 +1659,7 @@ PanelWindow {
                     // Shutdown
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 52
+                        implicitHeight: 40
                         radius: 12
                         color: shutdownArea.containsMouse ? cc.critical : cc.bgAlt
 
@@ -1668,7 +1668,7 @@ PanelWindow {
                             text: "\uf011" // power
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 22
+                            font.pixelSize: 18
                             font.bold: true
                         }
                         MouseArea {
@@ -1682,7 +1682,7 @@ PanelWindow {
                     // Reboot
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 52
+                        implicitHeight: 40
                         radius: 12
                         color: rebootArea.containsMouse ? cc.accent : cc.bgAlt
 
@@ -1691,7 +1691,7 @@ PanelWindow {
                             text: "\uf021" // reboot / refresh
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 22
+                            font.pixelSize: 18
                             font.bold: true
                         }
                         MouseArea {
@@ -1705,7 +1705,7 @@ PanelWindow {
                     // Logout
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 52
+                        implicitHeight: 40
                         radius: 12
                         color: logoutArea.containsMouse ? cc.accent : cc.bgAlt
 
@@ -1714,7 +1714,7 @@ PanelWindow {
                             text: "\uf08b" // sign-out
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 22
+                            font.pixelSize: 18
                             font.bold: true
                         }
                         MouseArea {
