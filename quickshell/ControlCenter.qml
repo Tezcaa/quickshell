@@ -546,7 +546,9 @@ PanelWindow {
 
         RowLayout {
             id: mainRow
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
             anchors.margins: 26
             spacing: 20
 
