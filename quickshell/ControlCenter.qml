@@ -500,6 +500,78 @@ PanelWindow {
         onTriggered: cc.refreshSysres()
     }
 
+    // ---- Calculator ----
+    property string calcDisplay: "0"
+    property string calcCurrent: ""
+    property real calcPrevious: 0
+    property string calcOperator: ""
+    property bool calcClearNext: false
+
+    function calcPress(key) {
+        if (key === "C") {
+            cc.calcDisplay = "0";
+            cc.calcCurrent = "";
+            cc.calcPrevious = 0;
+            cc.calcOperator = "";
+            cc.calcClearNext = false;
+            return;
+        }
+        if (key === "←") {
+            if (cc.calcClearNext) {
+                cc.calcDisplay = "0";
+                cc.calcClearNext = false;
+            } else {
+                cc.calcDisplay = cc.calcDisplay.length > 1 ? cc.calcDisplay.slice(0, -1) : "0";
+            }
+            cc.calcCurrent = cc.calcDisplay;
+            return;
+        }
+        if (key === "=") {
+            cc.calcCompute();
+            return;
+        }
+        if (["+", "-", "*", "/"].indexOf(key) >= 0) {
+            if (cc.calcOperator !== "" && !cc.calcClearNext) {
+                cc.calcCompute();
+            } else {
+                cc.calcPrevious = parseFloat(cc.calcDisplay) || 0;
+            }
+            cc.calcOperator = key;
+            cc.calcClearNext = true;
+            return;
+        }
+        // Digit or decimal point.
+        if (cc.calcClearNext) {
+            cc.calcDisplay = key === "." ? "0." : key;
+            cc.calcClearNext = false;
+        } else {
+            if (key === ".") {
+                if (cc.calcDisplay.indexOf(".") < 0) cc.calcDisplay += ".";
+            } else {
+                if (cc.calcDisplay === "0") cc.calcDisplay = key;
+                else cc.calcDisplay += key;
+            }
+        }
+        cc.calcCurrent = cc.calcDisplay;
+    }
+
+    function calcCompute() {
+        const current = parseFloat(cc.calcDisplay) || 0;
+        let result = 0;
+        switch (cc.calcOperator) {
+            case "+": result = cc.calcPrevious + current; break;
+            case "-": result = cc.calcPrevious - current; break;
+            case "*": result = cc.calcPrevious * current; break;
+            case "/": result = current === 0 ? 0 : cc.calcPrevious / current; break;
+            default: result = current;
+        }
+        cc.calcDisplay = "" + result;
+        cc.calcCurrent = "";
+        cc.calcPrevious = result;
+        cc.calcOperator = "";
+        cc.calcClearNext = true;
+    }
+
     // Re-check for updates every 30 minutes.
     Timer {
         interval: 30 * 60 * 1000
@@ -1526,6 +1598,84 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: cc.runUpdate()
+                    }
+                }
+
+                // ---- Calculator widget ----
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: calcCol.implicitHeight + 32
+                    radius: 12
+                    color: cc.bgAlt
+
+                    ColumnLayout {
+                        id: calcCol
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 16
+                        spacing: 12
+
+                        // Display.
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 42
+                            radius: 8
+                            color: cc.bgAlt2
+
+                            Text {
+                                id: calcDisplayText
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.rightMargin: 12
+                                text: cc.calcDisplay
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 22
+                                font.bold: true
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+
+                        // Keypad.
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 4
+                            columnSpacing: 8
+                            rowSpacing: 8
+
+                            Repeater {
+                                model: [
+                                    "C", "/", "*", "←",
+                                    "7", "8", "9", "-",
+                                    "4", "5", "6", "+",
+                                    "1", "2", "3", "=",
+                                    "0", ".", "", ""
+                                ]
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 38
+                                    radius: 8
+                                    color: modelData === "" ? "transparent" : calcKeyArea.containsMouse ? cc.accent : cc.bgAlt2
+                                    visible: modelData !== ""
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: modelData
+                                        color: cc.fg
+                                        font.family: cc.fontFamily
+                                        font.pixelSize: 16
+                                        font.bold: true
+                                    }
+                                    MouseArea {
+                                        id: calcKeyArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onClicked: cc.calcPress(modelData)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
