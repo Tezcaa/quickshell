@@ -1008,7 +1008,7 @@ PanelWindow {
                 Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
                 Layout.minimumHeight: Layout.preferredHeight
                 Layout.maximumHeight: Layout.preferredHeight
-                spacing: 16
+                spacing: 0
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -1265,8 +1265,8 @@ PanelWindow {
                     }
                 }
 
-                // Spacer pushes the remaining right-column widgets to the bottom.
-                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+                // 20px gap matching calendar-to-weather spacing.
+                Item { Layout.fillWidth: true; Layout.preferredHeight: 20 }
 
                 // ---- System resources widget ----
                 RowLayout {
@@ -1372,6 +1372,8 @@ PanelWindow {
                         }
                     }
                 }
+
+                Item { Layout.fillWidth: true; Layout.preferredHeight: 16 }
 
                 // ---- Volume + output device widget ----
                 Rectangle {
@@ -1499,6 +1501,8 @@ PanelWindow {
                     }
                 }
 
+                Item { Layout.fillWidth: true; Layout.preferredHeight: 16 }
+
                 // ---- Mouse battery widget ----
                 Rectangle {
                     Layout.fillWidth: true
@@ -1549,6 +1553,8 @@ PanelWindow {
                         }
                     }
                 }
+
+                Item { Layout.fillWidth: true; Layout.preferredHeight: 16 }
 
                 // ---- Calculator widget ----
                 Rectangle {
@@ -1622,6 +1628,8 @@ PanelWindow {
                         }
                     }
                 }
+
+                Item { Layout.fillWidth: true; Layout.preferredHeight: 16 }
 
                 // ---- Power buttons widget ----
                 RowLayout {
