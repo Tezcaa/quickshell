@@ -779,6 +779,7 @@ PanelWindow {
 
             // ---- Weather widget ----
             Rectangle {
+                id: weatherRect
                 Layout.fillWidth: true
                 implicitHeight: wxCol.implicitHeight + 24
                 radius: 12
@@ -1010,7 +1011,7 @@ PanelWindow {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height
+                    Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
                     radius: 12
                     color: cc.bgAlt
 
