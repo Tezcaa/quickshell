@@ -1275,7 +1275,7 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 86
-                        implicitHeight: 68
+                        implicitHeight: 86
                         radius: 12
                         color: cc.bgAlt
                         clip: true
@@ -1299,7 +1299,7 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 86
-                        implicitHeight: 68
+                        implicitHeight: 86
                         radius: 12
                         color: cc.bgAlt
                         clip: true
@@ -1323,7 +1323,7 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 86
-                        implicitHeight: 68
+                        implicitHeight: 86
                         radius: 12
                         color: cc.bgAlt
                         clip: true
