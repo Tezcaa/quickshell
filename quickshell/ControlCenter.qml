@@ -16,7 +16,7 @@ PanelWindow {
     property bool panelVisible: true
 
     // Re-check status each time the panel is opened.
-    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); }
+    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); refreshWifi(); refreshBluetooth(); }
 
     visible: panelVisible
 
@@ -365,7 +365,7 @@ PanelWindow {
 
     function refreshWeather() { weatherProc.running = true; }
 
-    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); }
+    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); refreshWifi(); refreshBluetooth(); }
 
     // Refresh weather every 15 minutes while open.
     Timer {
@@ -457,6 +457,65 @@ PanelWindow {
     function powerReboot()   { Quickshell.execDetached(["systemctl", "reboot"]); }
     function powerShutdown() { Quickshell.execDetached(["systemctl", "poweroff"]); }
     function powerLogout()   { Quickshell.execDetached(["niri", "msg", "action", "quit", "--skip-confirmation"]); }
+
+    // ---- WiFi / Bluetooth toggles ----
+    property bool wifiEnabled: false
+    property bool bluetoothEnabled: false
+
+    Process {
+        id: wifiStatusProc
+        command: ["rfkill", "list", "wifi"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const txt = "" + wifiStatusProc.stdout.text;
+                const m = txt.match(/Soft blocked:\s*(\S+)/);
+                cc.wifiEnabled = (m && m[1] === "no");
+            }
+        }
+    }
+    function refreshWifi() { if (!wifiStatusProc.running) wifiStatusProc.running = true; }
+    function toggleWifi() {
+        const cmd = cc.wifiEnabled ? ["rfkill", "block", "wifi"] : ["rfkill", "unblock", "wifi"];
+        Quickshell.execDetached(cmd);
+        wifiRefreshTimer.restart();
+    }
+    Timer {
+        id: wifiRefreshTimer
+        interval: 1000
+        repeat: false
+        onTriggered: cc.refreshWifi()
+    }
+
+    Process {
+        id: btStatusProc
+        command: ["bluetoothctl", "show"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const txt = "" + btStatusProc.stdout.text;
+                const m = txt.match(/Powered:\s*(\S+)/);
+                cc.bluetoothEnabled = (m && m[1] === "yes");
+            }
+        }
+    }
+    function refreshBluetooth() { if (!btStatusProc.running) btStatusProc.running = true; }
+    function toggleBluetooth() {
+        const cmd = cc.bluetoothEnabled ? ["bluetoothctl", "power", "off"] : ["bluetoothctl", "power", "on"];
+        Quickshell.execDetached(cmd);
+        btRefreshTimer.restart();
+    }
+    Timer {
+        id: btRefreshTimer
+        interval: 1000
+        repeat: false
+        onTriggered: cc.refreshBluetooth()
+    }
+
+    Timer {
+        interval: 3000
+        running: true
+        repeat: true
+        onTriggered: { cc.refreshWifi(); cc.refreshBluetooth(); }
+    }
 
     // Re-check for updates every 30 minutes.
     Timer {
@@ -1406,6 +1465,62 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: cc.runUpdate()
+                    }
+                }
+
+                // ---- WiFi + Bluetooth toggles ----
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    // WiFi
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 12
+                        color: wifiArea.containsMouse
+                            ? (cc.wifiEnabled ? cc.accent : cc.fg)
+                            : (cc.wifiEnabled ? cc.bgAlt : cc.bgAlt2)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf1eb" // wifi
+                            color: cc.wifiEnabled ? cc.fg : cc.fgDim
+                            font.family: cc.fontFamily
+                            font.pixelSize: 22
+                            font.bold: true
+                        }
+                        MouseArea {
+                            id: wifiArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: cc.toggleWifi()
+                        }
+                    }
+
+                    // Bluetooth
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 12
+                        color: btArea.containsMouse
+                            ? (cc.bluetoothEnabled ? cc.accent : cc.fg)
+                            : (cc.bluetoothEnabled ? cc.bgAlt : cc.bgAlt2)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf294" // bluetooth-b
+                            color: cc.bluetoothEnabled ? cc.fg : cc.fgDim
+                            font.family: cc.fontFamily
+                            font.pixelSize: 22
+                            font.bold: true
+                        }
+                        MouseArea {
+                            id: btArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: cc.toggleBluetooth()
+                        }
                     }
                 }
 
