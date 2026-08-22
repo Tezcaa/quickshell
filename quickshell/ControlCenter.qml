@@ -1308,14 +1308,14 @@ PanelWindow {
                             anchors.centerIn: parent
                             width: parent.width
                             height: parent.height
-                            text: "\uf0a0\n" + cc.ramUsedGb.toFixed(1) + "/" + cc.ramTotalGb.toFixed(1) + " GB"
+                            text: "\uf0a0\n" + cc.ramUsedGb.toFixed(1) + "\n" + cc.ramTotalGb.toFixed(1) + " GB"
                             color: cc.fg
                             font.family: cc.fontFamily
                             font.pixelSize: 12
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            lineHeight: 1.3
+                            lineHeight: 1.1
                         }
                     }
 
