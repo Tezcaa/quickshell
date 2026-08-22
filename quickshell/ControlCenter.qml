@@ -586,11 +586,11 @@ PanelWindow {
         onClicked: cc.requestClose()
     }
 
-    // The panel, anchored to the top-center.
-    Rectangle {
-        id: panel
-        width: mainRow.implicitWidth + 52
-        height: mainRow.implicitHeight + 52
+        // The panel, anchored to the top-center.
+        Rectangle {
+            id: panel
+            width: mainRow.implicitWidth + 52
+            height: content.implicitHeight + 52
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 12
