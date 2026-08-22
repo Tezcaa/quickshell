@@ -1265,8 +1265,8 @@ PanelWindow {
                     }
                 }
 
-                // Spacer pushes the remaining right-column widgets to the bottom.
-                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+                // Fixed spacer: combined with 10px spacing above/below gives 20px gap.
+                Item { Layout.fillWidth: true; Layout.preferredHeight: 0 }
 
                 // ---- System resources widget ----
                 RowLayout {
@@ -1376,17 +1376,18 @@ PanelWindow {
                 // ---- Volume + output device widget ----
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: volCol.implicitHeight + 32
+                    Layout.fillHeight: true
+                    implicitHeight: volCol.implicitHeight + 24
                     radius: 12
                     color: cc.bgAlt
 
-                    ColumnLayout {
-                        id: volCol
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: 12
-                        spacing: 8
+                        ColumnLayout {
+                            id: volCol
+                            anchors.centerIn: parent
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.margins: 12
+                            spacing: 8
 
                         // Volume row: icon + slider.
                         RowLayout {
@@ -1553,15 +1554,16 @@ PanelWindow {
                 // ---- Calculator widget ----
                 Rectangle {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.preferredHeight: calcCol.implicitHeight + 24
                     radius: 12
                     color: cc.bgAlt
 
                     ColumnLayout {
                         id: calcCol
+                        anchors.centerIn: parent
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.top: parent.top
                         anchors.margins: 12
                         spacing: 8
 
