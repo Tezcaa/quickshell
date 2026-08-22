@@ -1006,12 +1006,12 @@ PanelWindow {
             // ---- Media control column (right side) ----
             ColumnLayout {
                 Layout.preferredWidth: 300
-                Layout.alignment: Qt.AlignTop
+                Layout.fillHeight: true
                 spacing: 16
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
+                    Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height
                     radius: 12
                     color: cc.bgAlt
 
