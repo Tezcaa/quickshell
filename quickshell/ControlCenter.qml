@@ -552,6 +552,7 @@ PanelWindow {
 
             ColumnLayout {
                 id: content
+                Layout.alignment: Qt.AlignTop
                 Layout.preferredWidth: 460
                 spacing: 20
 
@@ -947,6 +948,7 @@ PanelWindow {
 
             // ---- Media control column (right side) ----
             ColumnLayout {
+                Layout.alignment: Qt.AlignTop
                 Layout.preferredWidth: 300
                 Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
                 Layout.minimumHeight: Layout.preferredHeight
