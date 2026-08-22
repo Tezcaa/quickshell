@@ -1006,7 +1006,9 @@ PanelWindow {
             ColumnLayout {
                 Layout.preferredWidth: 300
                 Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
-                spacing: 20
+                Layout.minimumHeight: Layout.preferredHeight
+                Layout.maximumHeight: Layout.preferredHeight
+                spacing: 16
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -1263,8 +1265,8 @@ PanelWindow {
                     }
                 }
 
-                // 20px gap: top of resources aligns with top of weather panel.
-                Item { Layout.fillWidth: true; Layout.preferredHeight: 0 }
+                // Spacer pushes the remaining right-column widgets to the bottom.
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
                 // ---- System resources widget ----
                 RowLayout {
