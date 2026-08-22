@@ -1614,7 +1614,7 @@ PanelWindow {
                                 : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
                             color: cc.checkingUpdates ? cc.fgDim : cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 18
+                            font.pixelSize: 22
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
