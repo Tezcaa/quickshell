@@ -920,15 +920,17 @@ PanelWindow {
                                     }
                                 }
                             }
-                        }
                     }
+                }
 
-                    // Forecast boxes (grid of day cards).
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 282
-                        Layout.topMargin: 8
-                        color: "transparent"
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
+                // ---- Power buttons widget ----
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 40
+                    radius: 12
+                    color: "transparent"
                         visible: cc.showForecast
 
                         GridLayout {
@@ -1008,7 +1010,7 @@ PanelWindow {
                 Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
                 Layout.minimumHeight: Layout.preferredHeight
                 Layout.maximumHeight: Layout.preferredHeight
-                spacing: 10
+                spacing: 0
 
                 Rectangle {
                     Layout.fillWidth: true
@@ -1265,8 +1267,8 @@ PanelWindow {
                     }
                 }
 
-                // Fixed spacer: combined with 10px spacing above/below gives 20px gap.
-                Item { Layout.fillWidth: true; Layout.preferredHeight: 0 }
+                // 20px gap matching calendar-to-weather spacing.
+                Item { Layout.fillWidth: true; Layout.preferredHeight: 20 }
 
                 // ---- System resources widget ----
                 RowLayout {
@@ -1373,10 +1375,11 @@ PanelWindow {
                     }
                 }
 
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
                 // ---- Volume + output device widget ----
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
                     implicitHeight: volCol.implicitHeight + 24
                     radius: 12
                     color: cc.bgAlt
@@ -1500,6 +1503,8 @@ PanelWindow {
                     }
                 }
 
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
                 // ---- Mouse battery widget ----
                 Rectangle {
                     Layout.fillWidth: true
@@ -1551,10 +1556,11 @@ PanelWindow {
                     }
                 }
 
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
                 // ---- Calculator widget ----
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
                     Layout.preferredHeight: calcCol.implicitHeight + 24
                     radius: 12
                     color: cc.bgAlt
