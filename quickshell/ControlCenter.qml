@@ -16,7 +16,7 @@ PanelWindow {
     property bool panelVisible: true
 
     // Re-check status each time the panel is opened.
-    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); refreshWifi(); refreshBluetooth(); }
+    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); refreshWifi(); refreshBluetooth(); refreshBluetoothDevices(); }
 
     visible: panelVisible
 
@@ -365,7 +365,7 @@ PanelWindow {
 
     function refreshWeather() { weatherProc.running = true; }
 
-    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); refreshWifi(); refreshBluetooth(); }
+    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); refreshWifi(); refreshBluetooth(); refreshBluetoothDevices(); }
 
     // Refresh weather every 15 minutes while open.
     Timer {
@@ -508,6 +508,106 @@ PanelWindow {
         interval: 1000
         repeat: false
         onTriggered: cc.refreshBluetooth()
+    }
+
+    // ---- Bluetooth device list / pairing ----
+    property var bluetoothDevices: []
+    property var btPendingDevices: []
+    property int btPendingIndex: 0
+    property bool bluetoothScanning: false
+
+    Process {
+        id: btListProc
+        command: ["bluetoothctl", "devices"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const txt = "" + btListProc.stdout.text;
+                const devices = [];
+                for (const line of txt.split('\n')) {
+                    const m = line.match(/Device\s+([0-9A-F:]+)\s+(.+)/);
+                    if (m) devices.push({ mac: m[1], name: m[2], paired: false, connected: false, trusted: false });
+                }
+                cc.btPendingDevices = devices;
+                cc.btPendingIndex = 0;
+                cc.btInfoProcNext();
+            }
+        }
+    }
+
+    function btInfoProcNext() {
+        if (cc.btPendingIndex >= cc.btPendingDevices.length) {
+            cc.bluetoothDevices = cc.btPendingDevices;
+            return;
+        }
+        const d = cc.btPendingDevices[cc.btPendingIndex];
+        btInfoProc.command = ["bluetoothctl", "info", d.mac];
+        btInfoProc.running = true;
+    }
+
+    Process {
+        id: btInfoProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const txt = "" + btInfoProc.stdout.text;
+                const d = cc.btPendingDevices[cc.btPendingIndex];
+                if (d) {
+                    d.paired = /Paired:\s*yes/.test(txt);
+                    d.connected = /Connected:\s*yes/.test(txt);
+                    d.trusted = /Trusted:\s*yes/.test(txt);
+                }
+                cc.btPendingIndex += 1;
+                cc.btInfoProcNext();
+            }
+        }
+    }
+
+    function refreshBluetoothDevices() {
+        if (!cc.bluetoothEnabled || !cc.panelVisible) return;
+        if (!btListProc.running) btListProc.running = true;
+    }
+
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        onTriggered: cc.refreshBluetoothDevices()
+    }
+
+    Process {
+        id: btScanProc
+        command: ["bluetoothctl", "--timeout", "10", "scan", "on"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                cc.bluetoothScanning = false;
+                cc.refreshBluetoothDevices();
+            }
+        }
+    }
+
+    function startBluetoothScan() {
+        if (btScanProc.running || !cc.bluetoothEnabled) return;
+        cc.bluetoothScanning = true;
+        btScanProc.running = true;
+    }
+
+    function bluetoothDeviceAction(mac) {
+        const d = cc.bluetoothDevices.find(dev => dev.mac === mac);
+        if (!d) return;
+        if (d.connected) {
+            Quickshell.execDetached(["bluetoothctl", "disconnect", mac]);
+        } else if (d.paired) {
+            Quickshell.execDetached(["bluetoothctl", "connect", mac]);
+        } else {
+            Quickshell.execDetached(["bluetoothctl", "pair", mac]);
+        }
+        btDeviceRefreshTimer.restart();
+    }
+
+    Timer {
+        id: btDeviceRefreshTimer
+        interval: 1500
+        repeat: false
+        onTriggered: cc.refreshBluetoothDevices()
     }
 
     Timer {
@@ -1520,6 +1620,98 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             onClicked: cc.toggleBluetooth()
+                        }
+                    }
+                }
+
+                // ---- Bluetooth device list ----
+                Rectangle {
+                    Layout.fillWidth: true
+                    visible: cc.bluetoothEnabled && cc.bluetoothDevices.length > 0
+                    Layout.preferredHeight: btDeviceCol.implicitHeight + 24
+                    radius: 12
+                    color: cc.bgAlt
+
+                    ColumnLayout {
+                        id: btDeviceCol
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 12
+                        spacing: 8
+
+                        // Scan button.
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 32
+                            radius: 8
+                            color: btScanArea.containsMouse ? cc.accent : cc.bgAlt2
+                            Text {
+                                anchors.centerIn: parent
+                                text: cc.bluetoothScanning ? "Scanning..." : "Scan"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 12
+                                font.bold: true
+                            }
+                            MouseArea {
+                                id: btScanArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: cc.startBluetoothScan()
+                            }
+                        }
+
+                        Repeater {
+                            model: cc.bluetoothDevices
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 38
+                                radius: 8
+                                color: cc.bgAlt2
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 8
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 0
+
+                                        Text {
+                                            text: modelData.name || "Unknown"
+                                            color: cc.fg
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 12
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            text: modelData.mac
+                                            color: cc.fgDim
+                                            font.family: cc.fontFamily
+                                            font.pixelSize: 10
+                                            font.bold: true
+                                        }
+                                    }
+
+                                    Text {
+                                        text: modelData.connected
+                                            ? "Disconnect"
+                                            : (modelData.paired ? "Connect" : "Pair")
+                                        color: cc.fg
+                                        font.family: cc.fontFamily
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -6
+                                            onClicked: cc.bluetoothDeviceAction(modelData.mac)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
