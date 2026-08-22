@@ -1610,8 +1610,8 @@ PanelWindow {
                         Text {
                             anchors.centerIn: parent
                             text: cc.checkingUpdates
-                                ? "\uf021\n..."
-                                : (cc.updateCount > 0 ? "\uf021\n" + cc.updateCount : "\uf021\n\uf00c")
+                                ? "..."
+                                : (cc.updateCount > 0 ? cc.updateCount : "\uf00c")
                             color: cc.checkingUpdates ? cc.fgDim : cc.fg
                             font.family: cc.fontFamily
                             font.pixelSize: 18
