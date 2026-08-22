@@ -598,6 +598,8 @@ PanelWindow {
         } else if (d.paired) {
             Quickshell.execDetached(["bluetoothctl", "connect", mac]);
         } else {
+            if (!btAgentProc.running) btAgentProc.running = true;
+            Quickshell.execDetached(["bluetoothctl", "pairable", "on"]);
             Quickshell.execDetached(["bluetoothctl", "pair", mac]);
         }
         btDeviceRefreshTimer.restart();
@@ -608,6 +610,75 @@ PanelWindow {
         interval: 1500
         repeat: false
         onTriggered: cc.refreshBluetoothDevices()
+    }
+
+    // ---- Bluetooth pairing agent (PIN/passkey dialog) ----
+    property string btAgentRequestType: ""   // PINCODE, PASSKEY, CONFIRM, AUTHORIZE, AUTHORIZE_SERVICE
+    property string btAgentRequestDevice: ""
+    property string btAgentRequestName: ""
+    property string btAgentRequestPasskey: ""
+    property string btAgentInputText: ""
+
+    Process {
+        id: btAgentProc
+        running: true
+        command: ["python3", Quickshell.env("HOME") + "/Scripts/bt-agent.py"]
+        stdout: StdioCollector { onStreamFinished: {} }
+    }
+
+    Process {
+        id: btAgentPollProc
+            command: ["bash", "-c", "touch /tmp/quickshell-bt-req.txt /tmp/quickshell-bt-resp.txt && cat /tmp/quickshell-bt-req.txt"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    const txt = "" + btAgentPollProc.stdout.text;
+                    const line = txt.split('\n')[0].trim();
+                    if (!line) {
+                        cc.btAgentRequestType = "";
+                        return;
+                    }
+                    const parts = line.split(' ');
+                    const type = parts[0] || "";
+                    const path = parts[1] || "";
+                    const addr = parts[2] || "";
+                    let nameEnd = parts.length;
+                    let extra = "";
+                    if (type === "CONFIRM" || type === "AUTHORIZE_SERVICE") {
+                        nameEnd = parts.length - 1;
+                        extra = parts[parts.length - 1] || "";
+                    } else if (type === "DISPLAY_PASSKEY" || type === "DISPLAY_PINCODE") {
+                        nameEnd = parts.length - 2;
+                        extra = parts[parts.length - 2] || "";
+                    }
+                    const name = parts.slice(3, nameEnd).join(' ') || addr || "Device";
+                    cc.btAgentRequestType = type;
+                    cc.btAgentRequestDevice = path;
+                    cc.btAgentRequestName = name;
+                    cc.btAgentRequestPasskey = extra;
+                }
+            }
+        }
+
+    Timer {
+        interval: 500
+        running: true
+        repeat: true
+        onTriggered: {
+            if (!cc.panelVisible || !cc.bluetoothEnabled) {
+                cc.btAgentRequestType = "";
+                return;
+            }
+            if (!btAgentProc.running) btAgentProc.running = true;
+            if (!btAgentPollProc.running) btAgentPollProc.running = true;
+        }
+    }
+
+    function btAgentRespond(value) {
+        const v = (value || "").toString().replace(/'/g, "'\"'\"'");
+        const path = cc.btAgentRequestDevice.replace(/'/g, "'\"'\"'");
+        Quickshell.execDetached(["bash", "-c", "echo '" + path + " " + v + "' >> /tmp/quickshell-bt-resp.txt"]);
+        cc.btAgentRequestType = "";
+        cc.btAgentInputText = "";
     }
 
     Timer {
@@ -1802,6 +1873,120 @@ PanelWindow {
 
             }
 
+        }
+
+        // Bluetooth PIN / passkey / confirmation dialog.
+        Rectangle {
+            visible: cc.btAgentRequestType !== ""
+            anchors.fill: parent
+            anchors.margins: 26
+            radius: 12
+            color: cc.bg
+            border.color: cc.fg
+            border.width: 1
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 12
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: {
+                        if (cc.btAgentRequestType === "PINCODE") return "Enter PIN for " + cc.btAgentRequestName;
+                        if (cc.btAgentRequestType === "PASSKEY") return "Enter passkey for " + cc.btAgentRequestName;
+                        if (cc.btAgentRequestType === "CONFIRM") return "Confirm pairing with " + cc.btAgentRequestName + "\nPasskey: " + cc.btAgentRequestPasskey;
+                        if (cc.btAgentRequestType === "AUTHORIZE" || cc.btAgentRequestType === "AUTHORIZE_SERVICE") return "Authorize " + cc.btAgentRequestName + "?";
+                        return "Bluetooth pairing request";
+                    }
+                    color: cc.fg
+                    font.family: cc.fontFamily
+                    font.pixelSize: 14
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Rectangle {
+                    visible: cc.btAgentRequestType === "PINCODE" || cc.btAgentRequestType === "PASSKEY"
+                    Layout.preferredWidth: 160
+                    Layout.preferredHeight: 36
+                    radius: 8
+                    color: cc.bgAlt
+                    border.color: cc.fg
+                    border.width: 1
+
+                    TextInput {
+                        id: btPinInput
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        text: cc.btAgentInputText
+                        color: cc.fg
+                        font.family: cc.fontFamily
+                        font.pixelSize: 14
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        inputMethodHints: Qt.ImhDigitsOnly
+                        onTextChanged: cc.btAgentInputText = text
+                        focus: cc.btAgentRequestType === "PINCODE" || cc.btAgentRequestType === "PASSKEY"
+                        Component.onCompleted: forceActiveFocus()
+                    }
+                }
+
+                RowLayout {
+                    spacing: 12
+
+                    Rectangle {
+                        Layout.preferredWidth: 80
+                        Layout.preferredHeight: 36
+                        radius: 8
+                        color: btCancelArea.containsMouse ? cc.critical : cc.bgAlt
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Cancel"
+                            color: cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+                        MouseArea {
+                            id: btCancelArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: cc.btAgentRespond("cancel")
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: 80
+                        Layout.preferredHeight: 36
+                        radius: 8
+                        color: btOkArea.containsMouse ? cc.accent : cc.bgAlt
+                        Text {
+                            anchors.centerIn: parent
+                            text: {
+                                if (cc.btAgentRequestType === "CONFIRM" || cc.btAgentRequestType === "AUTHORIZE" || cc.btAgentRequestType === "AUTHORIZE_SERVICE") return "Confirm";
+                                return "OK";
+                            }
+                            color: cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+                        MouseArea {
+                            id: btOkArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: {
+                                if (cc.btAgentRequestType === "CONFIRM" || cc.btAgentRequestType === "AUTHORIZE" || cc.btAgentRequestType === "AUTHORIZE_SERVICE") {
+                                    cc.btAgentRespond("yes");
+                                } else {
+                                    cc.btAgentRespond(cc.btAgentInputText);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
