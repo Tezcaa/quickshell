@@ -1005,7 +1005,9 @@ PanelWindow {
             // ---- Media control column (right side) ----
             ColumnLayout {
                 Layout.preferredWidth: 300
-                Layout.preferredHeight: content.implicitHeight
+                Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
+                Layout.minimumHeight: Layout.preferredHeight
+                Layout.maximumHeight: Layout.preferredHeight
                 spacing: 16
 
                 Rectangle {
