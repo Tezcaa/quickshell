@@ -1627,7 +1627,7 @@ PanelWindow {
                 // ---- Bluetooth device list ----
                 Rectangle {
                     Layout.fillWidth: true
-                    visible: cc.bluetoothEnabled && cc.bluetoothDevices.length > 0
+                    visible: cc.bluetoothEnabled
                     Layout.preferredHeight: btDeviceCol.implicitHeight + 24
                     radius: 12
                     color: cc.bgAlt
@@ -1660,6 +1660,15 @@ PanelWindow {
                                 hoverEnabled: true
                                 onClicked: cc.startBluetoothScan()
                             }
+                        }
+
+                        Text {
+                            visible: cc.bluetoothDevices.length === 0
+                            text: cc.bluetoothScanning ? "Scanning..." : "No devices"
+                            color: cc.fgDim
+                            font.family: cc.fontFamily
+                            font.pixelSize: 12
+                            font.bold: true
                         }
 
                         Repeater {
