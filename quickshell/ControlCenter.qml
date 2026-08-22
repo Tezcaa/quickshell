@@ -1217,7 +1217,8 @@ PanelWindow {
                     // CPU.
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 52
+                        Layout.minimumWidth: 86
+                        implicitHeight: 68
                         radius: 12
                         color: cc.bgAlt
 
@@ -1226,17 +1227,18 @@ PanelWindow {
                             text: "\uf2db\n" + Math.round(cc.cpuPercent) + "%"
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 18
+                            font.pixelSize: 16
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
-                            lineHeight: 1.2
+                            lineHeight: 1.3
                         }
                     }
 
                     // RAM.
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 52
+                        Layout.minimumWidth: 86
+                        implicitHeight: 68
                         radius: 12
                         color: cc.bgAlt
 
@@ -1245,17 +1247,18 @@ PanelWindow {
                             text: "\uf0a0\n" + cc.ramUsedGb.toFixed(1) + " / " + cc.ramTotalGb.toFixed(1) + " GB"
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
-                            lineHeight: 1.2
+                            lineHeight: 1.3
                         }
                     }
 
                     // GPU.
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 52
+                        Layout.minimumWidth: 86
+                        implicitHeight: 68
                         radius: 12
                         color: cc.bgAlt
 
@@ -1264,10 +1267,10 @@ PanelWindow {
                             text: "\uf26c\n" + Math.round(cc.gpuPercent) + "%"
                             color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 18
+                            font.pixelSize: 16
                             font.bold: true
                             horizontalAlignment: Text.AlignHCenter
-                            lineHeight: 1.2
+                            lineHeight: 1.3
                         }
                     }
                 }
