@@ -549,9 +549,7 @@ PanelWindow {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.topMargin: 0
-            anchors.leftMargin: 26
-            anchors.rightMargin: 26
+            anchors.margins: 26
             spacing: 20
 
             ColumnLayout {
@@ -955,8 +953,6 @@ PanelWindow {
                 Layout.alignment: Qt.AlignTop
                 Layout.preferredWidth: 300
                 Layout.preferredHeight: clockRect.height + content.spacing + calendarRect.height + content.spacing + weatherRect.height
-                Layout.minimumHeight: Layout.preferredHeight
-                Layout.maximumHeight: Layout.preferredHeight
                 spacing: 0
 
                 Rectangle {
