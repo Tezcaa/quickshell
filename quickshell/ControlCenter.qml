@@ -16,7 +16,7 @@ PanelWindow {
     property bool panelVisible: true
 
     // Re-check status each time the panel is opened.
-    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); }
+    onPanelVisibleChanged: if (panelVisible) { refreshUpdates(); refreshRate(); refreshMouseBattery(); refreshSysres(); }
 
     visible: panelVisible
 
@@ -365,7 +365,7 @@ PanelWindow {
 
     function refreshWeather() { weatherProc.running = true; }
 
-    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); }
+    Component.onCompleted: { refreshWeather(); refreshUpdates(); refreshRate(); refreshSysres(); }
 
     // Refresh weather every 15 minutes while open.
     Timer {
@@ -457,6 +457,41 @@ PanelWindow {
     function powerReboot()   { Quickshell.execDetached(["systemctl", "reboot"]); }
     function powerShutdown() { Quickshell.execDetached(["systemctl", "poweroff"]); }
     function powerLogout()   { Quickshell.execDetached(["niri", "msg", "action", "quit", "--skip-confirmation"]); }
+
+    // ---- System resources ----
+    property real cpuPercent: 0
+    property real ramPercent: 0
+    property real gpuPercent: 0
+
+    Process {
+        id: sysresProc
+        command: [cc.scriptDir + "/sysres"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const txt = "" + sysresProc.stdout.text;
+                for (const line of txt.split('\n')) {
+                    const parts = line.split(':');
+                    if (parts.length !== 2) continue;
+                    const val = parseFloat(parts[1]);
+                    if (isNaN(val)) continue;
+                    switch (parts[0]) {
+                        case "cpu": cc.cpuPercent = val; break;
+                        case "ram": cc.ramPercent = val; break;
+                        case "gpu": cc.gpuPercent = val; break;
+                    }
+                }
+            }
+        }
+    }
+
+    function refreshSysres() { if (!sysresProc.running) sysresProc.running = true; }
+
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        onTriggered: cc.refreshSysres()
+    }
 
     // Re-check for updates every 30 minutes.
     Timer {
@@ -1166,6 +1201,140 @@ PanelWindow {
 
                 // Spacer pushes the remaining right-column widgets to the bottom.
                 Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
+                // ---- System resources widget ----
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: sysresCol.implicitHeight + 32
+                    radius: 12
+                    color: cc.bgAlt
+
+                    ColumnLayout {
+                        id: sysresCol
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 16
+                        spacing: 10
+
+                        // Header.
+                        Text {
+                            text: "Resources"
+                            color: cc.fgDim
+                            font.family: cc.fontFamily
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        // CPU.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                text: "\uf2db" // microchip/cpu
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 8
+                                radius: 4
+                                color: cc.bgAlt2
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    radius: 4
+                                    color: cc.fg
+                                    width: parent.width * Math.max(0, Math.min(1, cc.cpuPercent / 100))
+                                }
+                            }
+                            Text {
+                                Layout.preferredWidth: 42
+                                horizontalAlignment: Text.AlignRight
+                                text: Math.round(cc.cpuPercent) + "%"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 12
+                                font.bold: true
+                            }
+                        }
+
+                        // RAM.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                text: "\uf0a0" // hdd/memory
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 8
+                                radius: 4
+                                color: cc.bgAlt2
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    radius: 4
+                                    color: cc.fg
+                                    width: parent.width * Math.max(0, Math.min(1, cc.ramPercent / 100))
+                                }
+                            }
+                            Text {
+                                Layout.preferredWidth: 42
+                                horizontalAlignment: Text.AlignRight
+                                text: Math.round(cc.ramPercent) + "%"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 12
+                                font.bold: true
+                            }
+                        }
+
+                        // GPU.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Text {
+                                text: "\uf26c" // video/gpu
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 8
+                                radius: 4
+                                color: cc.bgAlt2
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    radius: 4
+                                    color: cc.fg
+                                    width: parent.width * Math.max(0, Math.min(1, cc.gpuPercent / 100))
+                                }
+                            }
+                            Text {
+                                Layout.preferredWidth: 42
+                                horizontalAlignment: Text.AlignRight
+                                text: Math.round(cc.gpuPercent) + "%"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 12
+                                font.bold: true
+                            }
+                        }
+                    }
+                }
 
                 // ---- Volume + output device widget ----
                 Rectangle {

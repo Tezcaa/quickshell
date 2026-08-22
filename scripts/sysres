@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+# Output system resource usage in a simple format:
+#   cpu:<percent>
+#   ram:<percent>
+#   gpu:<percent>
+
+import time
+import subprocess
+
+
+def cpu_sample():
+    with open('/proc/stat') as f:
+        line = f.readline()
+    fields = line.split()[1:]
+    idle = int(fields[3])
+    total = sum(int(x) for x in fields)
+    return idle, total
+
+
+def ram_usage():
+    mem = {}
+    with open('/proc/meminfo') as f:
+        for line in f:
+            if ':' in line:
+                key, val = line.split(':', 1)
+                mem[key.strip()] = int(val.split()[0])
+    total = mem.get('MemTotal', 0)
+    available = mem.get('MemAvailable', mem.get('MemFree', 0))
+    if total == 0:
+        return 0.0
+    return (total - available) / total * 100.0
+
+
+def gpu_usage():
+    try:
+        out = subprocess.check_output(
+            ['nvidia-smi', '--query-gpu=utilization.gpu', '--format=csv,noheader,nounits'],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=2
+        )
+        return float(out.strip())
+    except Exception:
+        return 0.0
+
+
+idle1, total1 = cpu_sample()
+time.sleep(0.5)
+idle2, total2 = cpu_sample()
+
+diff_idle = idle2 - idle1
+diff_total = total2 - total1
+if diff_total <= 0:
+    cpu_pct = 0.0
+else:
+    cpu_pct = (1.0 - diff_idle / diff_total) * 100.0
+
+print(f"cpu:{cpu_pct:.1f}")
+print(f"ram:{ram_usage():.1f}")
+print(f"gpu:{gpu_usage():.1f}")
