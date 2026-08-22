@@ -1318,6 +1318,7 @@ PanelWindow {
                             }
 
                             Text {
+                                id: ramUsedText
                                 Layout.alignment: Qt.AlignHCenter
                                 text: cc.ramUsedGb.toFixed(1) + " GB"
                                 color: cc.fg
@@ -1328,12 +1329,13 @@ PanelWindow {
 
                             Rectangle {
                                 Layout.alignment: Qt.AlignHCenter
-                                Layout.preferredWidth: 36
+                                Layout.preferredWidth: Math.max(ramUsedText.implicitWidth, ramTotalText.implicitWidth)
                                 Layout.preferredHeight: 1
                                 color: cc.fg
                             }
 
                             Text {
+                                id: ramTotalText
                                 Layout.alignment: Qt.AlignHCenter
                                 text: cc.ramTotalGb.toFixed(1) + " GB"
                                 color: cc.fg
