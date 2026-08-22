@@ -1503,7 +1503,6 @@ PanelWindow {
                     implicitHeight: 56
                     radius: 12
                     color: cc.bgAlt
-                    visible: cc.mouseBatteryPct >= 0
 
                     RowLayout {
                         anchors.fill: parent
@@ -1513,7 +1512,7 @@ PanelWindow {
 
                         Text {
                             text: cc.mouseBatteryIcon()
-                            color: cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
+                            color: cc.mouseBatteryPct >= 0 && cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
                             font.family: cc.fontFamily
                             font.pixelSize: 20
                             font.bold: true
@@ -1540,8 +1539,8 @@ PanelWindow {
                         }
 
                         Text {
-                            text: cc.mouseBatteryPct + "%"
-                            color: cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
+                            text: cc.mouseBatteryPct >= 0 ? cc.mouseBatteryPct + "%" : "--"
+                            color: cc.mouseBatteryPct >= 0 && cc.mouseBatteryPct <= 15 ? cc.critical : cc.fg
                             font.family: cc.fontFamily
                             font.pixelSize: 16
                             font.bold: true
