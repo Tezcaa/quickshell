@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Output system resource usage in a simple format:
 #   cpu:<percent>
-#   ram:<percent>
+#   ram:<percent>:<used_gb>:<total_gb>
 #   gpu:<percent>
 
 import time
@@ -24,11 +24,15 @@ def ram_usage():
             if ':' in line:
                 key, val = line.split(':', 1)
                 mem[key.strip()] = int(val.split()[0])
-    total = mem.get('MemTotal', 0)
-    available = mem.get('MemAvailable', mem.get('MemFree', 0))
-    if total == 0:
-        return 0.0
-    return (total - available) / total * 100.0
+    total_kb = mem.get('MemTotal', 0)
+    available_kb = mem.get('MemAvailable', mem.get('MemFree', 0))
+    if total_kb == 0:
+        return 0.0, 0.0, 0.0
+    used_kb = total_kb - available_kb
+    total_gb = total_kb / 1024 / 1024
+    used_gb = used_kb / 1024 / 1024
+    pct = used_kb / total_kb * 100.0
+    return pct, used_gb, total_gb
 
 
 def gpu_usage():
@@ -55,6 +59,8 @@ if diff_total <= 0:
 else:
     cpu_pct = (1.0 - diff_idle / diff_total) * 100.0
 
+ram_pct, ram_used, ram_total = ram_usage()
+
 print(f"cpu:{cpu_pct:.1f}")
-print(f"ram:{ram_usage():.1f}")
+print(f"ram:{ram_pct:.1f}:{ram_used:.1f}:{ram_total:.1f}")
 print(f"gpu:{gpu_usage():.1f}")

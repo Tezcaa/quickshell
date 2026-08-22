@@ -461,6 +461,8 @@ PanelWindow {
     // ---- System resources ----
     property real cpuPercent: 0
     property real ramPercent: 0
+    property real ramUsedGb: 0
+    property real ramTotalGb: 0
     property real gpuPercent: 0
 
     Process {
@@ -471,12 +473,17 @@ PanelWindow {
                 const txt = "" + sysresProc.stdout.text;
                 for (const line of txt.split('\n')) {
                     const parts = line.split(':');
-                    if (parts.length !== 2) continue;
+                    if (parts.length < 2) continue;
+                    const key = parts[0];
                     const val = parseFloat(parts[1]);
                     if (isNaN(val)) continue;
-                    switch (parts[0]) {
+                    switch (key) {
                         case "cpu": cc.cpuPercent = val; break;
-                        case "ram": cc.ramPercent = val; break;
+                        case "ram":
+                            cc.ramPercent = val;
+                            cc.ramUsedGb = parseFloat(parts[2]) || 0;
+                            cc.ramTotalGb = parseFloat(parts[3]) || 0;
+                            break;
                         case "gpu": cc.gpuPercent = val; break;
                     }
                 }
@@ -1203,135 +1210,64 @@ PanelWindow {
                 Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
                 // ---- System resources widget ----
-                Rectangle {
+                RowLayout {
                     Layout.fillWidth: true
-                    implicitHeight: sysresCol.implicitHeight + 32
-                    radius: 12
-                    color: cc.bgAlt
+                    spacing: 10
 
-                    ColumnLayout {
-                        id: sysresCol
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: 16
-                        spacing: 10
+                    // CPU.
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 12
+                        color: cc.bgAlt
 
-                        // Header.
                         Text {
-                            text: "Resources"
-                            color: cc.fgDim
+                            anchors.centerIn: parent
+                            text: "\uf2db\n" + Math.round(cc.cpuPercent) + "%"
+                            color: cc.fg
                             font.family: cc.fontFamily
-                            font.pixelSize: 14
+                            font.pixelSize: 18
                             font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            lineHeight: 1.2
                         }
+                    }
 
-                        // CPU.
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            Text {
-                                text: "\uf2db" // microchip/cpu
-                                color: cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 14
-                                font.bold: true
-                            }
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 8
-                                radius: 4
-                                color: cc.bgAlt2
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    radius: 4
-                                    color: cc.fg
-                                    width: parent.width * Math.max(0, Math.min(1, cc.cpuPercent / 100))
-                                }
-                            }
-                            Text {
-                                Layout.preferredWidth: 42
-                                horizontalAlignment: Text.AlignRight
-                                text: Math.round(cc.cpuPercent) + "%"
-                                color: cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 12
-                                font.bold: true
-                            }
+                    // RAM.
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 12
+                        color: cc.bgAlt
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf0a0\n" + cc.ramUsedGb.toFixed(1) + " / " + cc.ramTotalGb.toFixed(1) + " GB"
+                            color: cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 18
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            lineHeight: 1.2
                         }
+                    }
 
-                        // RAM.
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            Text {
-                                text: "\uf0a0" // hdd/memory
-                                color: cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 14
-                                font.bold: true
-                            }
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 8
-                                radius: 4
-                                color: cc.bgAlt2
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    radius: 4
-                                    color: cc.fg
-                                    width: parent.width * Math.max(0, Math.min(1, cc.ramPercent / 100))
-                                }
-                            }
-                            Text {
-                                Layout.preferredWidth: 42
-                                horizontalAlignment: Text.AlignRight
-                                text: Math.round(cc.ramPercent) + "%"
-                                color: cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 12
-                                font.bold: true
-                            }
-                        }
+                    // GPU.
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 12
+                        color: cc.bgAlt
 
-                        // GPU.
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            Text {
-                                text: "\uf26c" // video/gpu
-                                color: cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 14
-                                font.bold: true
-                            }
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 8
-                                radius: 4
-                                color: cc.bgAlt2
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.top: parent.top
-                                    anchors.bottom: parent.bottom
-                                    radius: 4
-                                    color: cc.fg
-                                    width: parent.width * Math.max(0, Math.min(1, cc.gpuPercent / 100))
-                                }
-                            }
-                            Text {
-                                Layout.preferredWidth: 42
-                                horizontalAlignment: Text.AlignRight
-                                text: Math.round(cc.gpuPercent) + "%"
-                                color: cc.fg
-                                font.family: cc.fontFamily
-                                font.pixelSize: 12
-                                font.bold: true
-                            }
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf26c\n" + Math.round(cc.gpuPercent) + "%"
+                            color: cc.fg
+                            font.family: cc.fontFamily
+                            font.pixelSize: 18
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            lineHeight: 1.2
                         }
                     }
                 }
