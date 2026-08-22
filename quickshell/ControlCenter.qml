@@ -1304,18 +1304,43 @@ PanelWindow {
                         color: cc.bgAlt
                         clip: true
 
-                        Text {
+                        ColumnLayout {
                             anchors.centerIn: parent
-                            width: parent.width
-                            height: parent.height
-                            text: "\uf0a0\n" + cc.ramUsedGb.toFixed(1) + "\n" + cc.ramTotalGb.toFixed(1) + " GB"
-                            color: cc.fg
-                            font.family: cc.fontFamily
-                            font.pixelSize: 12
-                            font.bold: true
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            lineHeight: 1.1
+                            spacing: 4
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "\uf0a0"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: cc.ramUsedGb.toFixed(1) + " GB"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 12
+                                font.bold: true
+                            }
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredWidth: 36
+                                Layout.preferredHeight: 1
+                                color: cc.fg
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: cc.ramTotalGb.toFixed(1) + " GB"
+                                color: cc.fg
+                                font.family: cc.fontFamily
+                                font.pixelSize: 12
+                                font.bold: true
+                            }
                         }
                     }
 
